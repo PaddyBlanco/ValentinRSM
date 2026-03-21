@@ -1,6 +1,7 @@
 # Project Memory
 
-**Vollständiger Grundplan:** [docs/PROJECT_CONTEXT.md](../docs/PROJECT_CONTEXT.md)
+**Vollständiger Grundplan:** [docs/PROJECT_CONTEXT.md](../docs/PROJECT_CONTEXT.md)  
+**Installation:** [docs/INSTALLATION.md](../docs/INSTALLATION.md)
 
 ## Architecture Constraints
 
