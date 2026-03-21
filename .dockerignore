@@ -1,0 +1,10 @@
+**/.git
+**/.cursor
+**/node_modules
+**/bin
+**/obj
+**/.next
+**/out
+**/.env
+**/.env.*
+!**/.env.example

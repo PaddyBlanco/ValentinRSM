@@ -1,0 +1,13 @@
+---
+description: Default engineering practices for this repository (planning, minimal changes, root causes, verification, clarity, project memory).
+alwaysApply: true
+---
+
+# Cursor Default Rules
+
+- Plan before non-trivial changes.
+- Make the smallest safe change.
+- Fix root causes, not symptoms.
+- Verify before declaring success.
+- Ask when requirements are ambiguous.
+- Update project memory only for durable, reusable lessons.
