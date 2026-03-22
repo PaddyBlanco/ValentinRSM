@@ -1,0 +1,54 @@
+---
+description: Orientierung Next.js-Webapp (apps/web) – Routen, Ordner, API-Anbindung
+globs: apps/web/**
+alwaysApply: false
+---
+
+# Web-App (`apps/web`)
+
+Internes RM-UI (Next.js App Router, React, TypeScript). **Domänenregeln und Architektur:** siehe [`.cursor/PROJECT_MEMORY.md`](.cursor/PROJECT_MEMORY.md) und [`docs/PROJECT_CONTEXT.md`](docs/PROJECT_CONTEXT.md).
+
+## Pflege
+
+**Nach größeren Umbauten** (neue Routen, neue `components/*`-Ordner, geänderte API-Pfade in `lib/api.ts`): diese Regel **aktualisieren**, damit Cursor nicht mit veralteten Pfaden arbeitet.
+
+## Tech & Befehle
+
+- **Dev:** `cd apps/web` → `npm run dev` (typisch http://localhost:3000)
+- **Build:** `npm run build`; Typcheck: `npx tsc --noEmit`
+- **API-Basis-URL:** Browser: `NEXT_PUBLIC_API_URL` (Fallback lokal `http://localhost:5112` in [`lib/api.ts`](apps/web/lib/api.ts)); Server-Komponenten/SSR: `API_INTERNAL_URL` oder Fallback wie `getApiBaseUrl()` dokumentiert.
+
+## App Router (`app/`)
+
+| Pfad | Inhalt |
+|------|--------|
+| [`app/layout.tsx`](apps/web/app/layout.tsx) | Root: Fonts, `ThemeProvider`, `SettingsProvider`, `globals.css` |
+| [`app/(app)/layout.tsx`](apps/web/app/(app)/layout.tsx) | Route-Group **ohne** URL-Segment: [`AppShell`](apps/web/components/layout/app-shell.tsx) (Sidebar, Mobile-Header/Nav, Hintergrund) |
+| `app/(app)/page.tsx` | Start |
+| `app/(app)/companies/page.tsx`, `companies/[id]/page.tsx` | Firmenliste & Detail |
+| `app/(app)/companies/new/page.tsx` | Redirect → Liste mit `?new=1` (Modal) |
+| `app/(app)/contacts/…` | analog: Liste, `[id]`, `new` Redirect |
+| `app/(app)/events/page.tsx` | globale Timeline |
+| `app/(app)/search/page.tsx` | Suche (Query `q`) |
+
+## Komponenten (`components/`)
+
+Gruppierung nach Verantwortung:
+
+- **`layout/`** – `app-shell`, `nav-sidebar`, `mobile-header`, `mobile-bottom-nav`
+- **`ui/`** – generisch, z. B. `modal`
+- **`companies/`**, **`contacts/`**, **`timeline/`** – Formulare & Timeline-Hilfen (`timeline-entry-type` für Icons/Labels)
+- **`branding/`** – Logo, Pawn, Hintergrund
+- **`settings/`** – `settings-provider` (+ Trigger aus Layout)
+- **`theme-provider.tsx`** – Root der Komponenten-Ebene (Theme)
+
+## API & Typen
+
+- **Einheitlicher Client:** [`lib/api.ts`](apps/web/lib/api.ts) – `fetchJson`/`postJson`/`putJson`/`deleteResource`, Typen für Company, Contact, Timeline, Search.
+- **REST-Pfade** (müssen zum Backend passen): `/api/companies`, `/api/contacts`, `/api/timelineentries`, `/api/search?q=…`
+- **Formulare:** [`lib/form-styles.ts`](apps/web/lib/form-styles.ts); Datum/Zeit: [`lib/datetime-local.ts`](apps/web/lib/datetime-local.ts); Nav-Icons: [`lib/nav.ts`](apps/web/lib/nav.ts)
+
+## UI-Konventionen (Kurz)
+
+- Viele **Create/Edit**-Flows über **Modal**; Löschen oft im Bearbeiten-Dialog.
+- **Responsive:** Sidebar ab `md`, unten Mobile-Nav; siehe [`.cursor/rules/web-responsive-mobile-first.mdc`](.cursor/rules/web-responsive-mobile-first.mdc).

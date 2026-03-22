@@ -1,0 +1,52 @@
+---
+description: Orientierung ASP.NET-API (apps/api) – Schichten, Controller, EF, Konventionen
+globs: apps/api/**
+alwaysApply: false
+---
+
+# API (`apps/api`)
+
+ASP.NET Core 10 Web-API, **EF Core**, **SQL Server**. JSON-Enums als **camelCase** (`JsonStringEnumConverter`). **Domänenregeln:** [`.cursor/PROJECT_MEMORY.md`](.cursor/PROJECT_MEMORY.md).
+
+## Pflege
+
+**Nach neuen Controllern, Endpoints, Entities oder Migrationen:** diese Regel **aktualisieren** (inkl. Web-Client [`apps/web/lib/api.ts`](apps/web/lib/api.ts), falls sich Pfade ändern).
+
+## Tech & Befehle
+
+- **Lokal:** `cd apps/api` → `dotnet run` (Port laut Launch/Output, oft **5112**; Health: `GET /health`)
+- **Build:** `dotnet build` aus Solution/Projekt
+- **EF:** `dotnet ef database update` / `dotnet ef migrations add Name` (Tool: `dotnet-ef`)
+- **Migration + Seed:** In **Development** in [`Program.cs`](apps/api/Program.cs): `MigrateAsync()` + `DevelopmentSeeder.SeedAsync`
+
+## Konfiguration
+
+- **Connection String:** `ConnectionStrings:DefaultConnection` (siehe `appsettings*.json`, Docker: `docker-compose.yml` → `ConnectionStrings__DefaultConnection`)
+- **CORS:** `AllowedOrigins` (Default u. a. `http://localhost:3000`) – [`Program.cs`](apps/api/Program.cs)
+- **Swagger:** nur in Development aktiv
+
+## Ordner (überblick)
+
+| Ordner | Inhalt |
+|--------|--------|
+| [`Controllers/`](apps/api/Controllers/) | REST: `Companies`, `Contacts`, `TimelineEntries`, `Search` – Routen `[Route("api/[controller]")]` |
+| [`Entities/`](apps/api/Entities/) | `Company`, `Contact`, `TimelineEntry` |
+| [`Contracts/`](apps/api/Contracts/) | Request/Response-DTOs (`*Dtos.cs`) |
+| [`Enums/`](apps/api/Enums/) | u. a. `CompanyStatus`, `TimelineEntryType`, `TimelineSource` |
+| [`Data/`](apps/api/Data/) | `ValentinRsmDbContext`, `Migrations/`, `DevelopmentSeeder.cs` |
+
+## REST-Überblick (mit Web-Client abgleichen)
+
+| Ressource | Controller | Typische Pfade (Client nutzt Kleinbuchstaben) |
+|-----------|------------|-----------------------------------------------|
+| Firmen | `CompaniesController` | `GET/POST /api/companies`, `GET/PUT/DELETE /api/companies/{id}` |
+| Kontakte | `ContactsController` | `GET /api/contacts?companyId=…`, `GET/POST`, `GET/PUT/DELETE /api/contacts/{id}` |
+| Timeline | `TimelineEntriesController` | `GET /api/timelineentries?…`, `POST`, `POST/PUT/DELETE …/{id}` |
+| Suche | `SearchController` | `GET /api/search?q=…` |
+
+**Hinweis:** ASP.NET-Routing ist **case-insensitive**; das Frontend spricht z. B. `/api/timelineentries` an.
+
+## Konventionen
+
+- **Cascade:** Löschverhalten von Firmen/Kontakten/Timeline konsistent mit DB und DTOs halten.
+- **Neue Endpoints:** DTOs in `Contracts/`, Mapping in Controller, ggf. Migration, **Frontend** `lib/api.ts` erweitern.
