@@ -33,3 +33,4 @@
 ## Durable Lessons
 
 - Nur **wiederverwendbare**, projektrelevante Erkenntnisse – nicht jeden Ad-hoc-Fund.
+- **Git:** Commits nach sinnvollen Einheiten; **`git push` zum Remote vorzugsweise nach abgeschlossenen Projektphasen** (nicht zwingend nach jedem kleinen Commit), sofern nicht anders angegeben.
