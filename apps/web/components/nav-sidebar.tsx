@@ -1,18 +1,14 @@
 "use client";
 
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import type { Company, TimelineEntry } from "@/lib/api";
 import { fetchCompanies, fetchTimeline, formatDateTime } from "@/lib/api";
+import { mainNav } from "@/lib/nav";
 import { ThemeToggle } from "./theme-toggle";
-
-const nav = [
-  { href: "/", label: "Start" },
-  { href: "/companies", label: "Firmen" },
-  { href: "/contacts", label: "Kontakte" },
-  { href: "/events", label: "Letzte Ereignisse" },
-];
+import { LogoMark } from "./logo-mark";
 
 function Hairline() {
   return <div className="h-px w-full bg-[var(--hairline)]" />;
@@ -51,24 +47,26 @@ export function NavSidebar() {
   const activeCompanies = companies.filter((c) => c.status === "active");
 
   return (
-    <aside className="flex w-[260px] shrink-0 flex-col border-r border-[var(--hairline)] bg-[var(--bg)]">
-      <div className="border-b border-[var(--hairline)] px-4 py-5">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="/logo.svg" alt="ValentinRSM" className="h-8 w-auto max-w-full" />
+    <aside className="hidden w-[260px] shrink-0 flex-col border-r border-[var(--hairline)] bg-[var(--bg)] md:flex">
+      <div className="border-b border-[var(--hairline)] px-4 py-5 text-[var(--fg)]">
+        <span className="sr-only">ValentinRSM</span>
+        <LogoMark className="h-8 w-auto max-w-full" />
       </div>
 
-      <nav className="flex flex-col gap-0 px-2 py-3 text-sm">
-        {nav.map((item) => {
-          const active = pathname === item.href || (item.href !== "/" && pathname.startsWith(item.href));
+      <nav className="flex flex-col gap-0 px-2 py-3 text-sm" aria-label="Hauptnavigation">
+        {mainNav.map((item) => {
+          const active =
+            pathname === item.href || (item.href !== "/" && pathname.startsWith(item.href));
           return (
             <Link
               key={item.href}
               href={item.href}
-              className={`rounded-sm px-3 py-2 transition hover:bg-[var(--hover)] ${
+              className={`flex flex-row items-center gap-3 rounded-sm px-3 py-2 transition hover:bg-[var(--hover)] ${
                 active ? "text-[var(--fg)]" : "text-[var(--fg-muted)]"
               }`}
             >
-              {item.label}
+              <FontAwesomeIcon icon={item.icon} className="h-4 w-4 shrink-0 opacity-90" aria-hidden />
+              <span>{item.label}</span>
             </Link>
           );
         })}

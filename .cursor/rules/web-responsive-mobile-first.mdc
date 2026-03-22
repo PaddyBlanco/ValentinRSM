@@ -1,0 +1,29 @@
+---
+description: Web-UI responsive und mobile-first (Layout, Typo, Touch, Breakpoints).
+globs: apps/web/**/*.{tsx,ts,css}
+alwaysApply: false
+---
+
+# Responsive Web & Mobile First
+
+Neue und geänderte Oberflächen im Web-Frontend **zuerst für schmale Viewports** denken, dann mit Breakpoints nach oben skalieren – nicht umgekehrt.
+
+## Layout & Raster
+
+- **Flex/Grid** mit sinnvollen `min-w-0` / `overflow` wo nötig; vermeide horizontales Scrollen der ganzen Seite durch fixe Breiten.
+- **Navigation & Shell:** Sidebar/Drawer: auf Mobile einklappbar, Stack oder Bottom-Bar – kein „nur Desktop“-Layout ohne Anpassung.
+- Nutze **Tailwind-Breakpoints** (`sm:`, `md:`, `lg:` …) gezielt: Basis = Mobile, größere Screens erweitern.
+
+## Typografie & Abstand
+
+- Lesbare **Schriftgrößen** auf kleinen Screens; `text-*` und Abstände (`p-*`, `gap-*`) nicht nur für Desktop optimieren.
+- **Touch-Ziele** groß genug (ca. 44×44px oder größer); genug Abstand zwischen klickbaren Flächen.
+
+## Medien & Formulare
+
+- Bilder: **max-width 100%** / responsive `Image`-Nutzung wo sinnvoll; keine Überläufe.
+- Formulare: Inputs **voll nutzbar** auf schmalen Screens (keine Mini-Felder nebeneinander ohne Break).
+
+## Prüfen
+
+- Kurz **schmale Fensterbreite** (oder DevTools Device) mitdenken, wenn UI gebaut oder geändert wird.
