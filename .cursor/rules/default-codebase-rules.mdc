@@ -11,3 +11,4 @@ alwaysApply: true
 - Verify before declaring success.
 - Ask when requirements are ambiguous.
 - Update project memory only for durable, reusable lessons.
+- **Nach Abschluss einer Projektphase:** Docker-Setup **mitziehen** – `docker-compose.yml`, `apps/*/Dockerfile`, `.env.example` und ggf. README prüfen/anpassen; **`docker compose build`** (oder `up --build`) ausführen, bis der Stack wieder konsistent baut.

@@ -22,6 +22,15 @@
 - WhatsApp als Timeline-Kanal oder Bot als eigenes Domänenobjekt – **falsch** laut Kontext.
 - Timeline ohne Kontakt oder Microservices „für später“ – **vermeiden**.
 
+## Docker nach Phasenende
+
+Am Ende **jeder abgeschlossenen Phase** (nicht nach jedem kleinen Commit):
+
+1. **`docker-compose.yml`** – Services, Ports, `environment` (z. B. `NEXT_PUBLIC_API_URL`, `API_INTERNAL_URL` für Web) prüfen.
+2. **`apps/api/Dockerfile`** / **`apps/web/Dockerfile`** – Pfade, Build-Args, Runtime-Env an aktuelle Apps anpassen.
+3. **`.env.example`** – neue/ geänderte Variablen dokumentieren.
+4. **Build verifizieren:** im Repo-Root `docker compose build` oder `docker compose up --build` bis ohne Fehler.
+
 ## Build / Test Commands
 
 - **Docker (gesamter Stack):** `copy .env.example .env` (Passwort setzen), dann im Repo-Root `docker compose up --build`
