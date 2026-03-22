@@ -5,7 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { CompanyForm } from "@/components/companies/company-form";
 import { ContactForm } from "@/components/contacts/contact-form";
-import { MailtoLink } from "@/components/contacts/contact-links";
+import { MailtoLink, TelLink } from "@/components/contacts/contact-links";
 import { Modal } from "@/components/ui/modal";
 import { TimelineEntryForm } from "@/components/timeline/timeline-entry-form";
 import { TimelineHtmlContent } from "@/components/timeline/timeline-html-content";
@@ -411,38 +411,86 @@ export default function CompanyDetailPage() {
 
       {companyTab === "contacts" && (
         <section className="mt-6" role="tabpanel" aria-labelledby="tab-contacts">
-          <div className="flex min-h-0 flex-col overflow-hidden rounded-lg border border-[var(--hairline)] bg-[var(--bg-elevated)]">
-            <div className="flex shrink-0 items-center justify-between gap-2 border-b border-[var(--hairline)] px-3 py-2.5">
-              <h2 className="text-sm font-medium">Kontakte</h2>
-              <button
-                type="button"
-                className="text-xs text-[var(--fg-muted)] hover:text-[var(--fg)] hover:underline"
-                onClick={() => {
-                  setNewContactFormKey((k) => k + 1);
-                  setNewContactOpen(true);
-                }}
-              >
-                + Neuer Kontakt
-              </button>
-            </div>
-            <ul className="max-h-[min(520px,65vh)] overflow-y-auto overscroll-contain text-sm">
-              {contacts.map((k) => (
-                <li key={k.id} className="border-b border-[var(--hairline)] last:border-0">
-                  <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1 px-3 py-2.5">
-                    <Link href={`/contacts/${k.id}`} className="font-medium hover:underline">
-                      {k.firstName} {k.lastName}
-                    </Link>
-                    {k.email && (
-                      <MailtoLink email={k.email} className="text-xs text-[var(--fg-muted)] hover:text-[var(--fg)]" />
-                    )}
+          <div className="mb-3 flex flex-wrap items-center justify-end gap-2">
+            <button
+              type="button"
+              className="inline-flex shrink-0 items-center rounded-sm border border-[var(--hairline)] bg-[var(--hover)] px-2.5 py-1 text-xs font-medium hover:bg-[var(--hairline)]"
+              onClick={() => {
+                setNewContactFormKey((k) => k + 1);
+                setNewContactOpen(true);
+              }}
+            >
+              Neu
+            </button>
+          </div>
+          <ul className="max-h-[min(520px,65vh)] divide-y divide-[var(--hairline)] overflow-y-auto overscroll-contain border-y border-[var(--hairline)]">
+            {[...contacts]
+              .sort((a, b) => {
+                const ln = a.lastName.localeCompare(b.lastName, "de", { sensitivity: "base" });
+                if (ln !== 0) return ln;
+                return a.firstName.localeCompare(b.firstName, "de", { sensitivity: "base" });
+              })
+              .map((k) => (
+                <li key={k.id}>
+                  <div className="grid grid-cols-1 gap-y-2 py-1.5 pr-1 text-sm hover:bg-[var(--hover)] md:grid-cols-[1fr_auto_1fr] md:items-center md:gap-x-4 md:gap-y-0">
+                    <div className="min-w-0">
+                      <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+                        <Link href={`/contacts/${k.id}`} className="shrink-0 font-medium hover:underline">
+                          {k.firstName} {k.lastName}
+                        </Link>
+                        {k.roleTitle?.trim() && (
+                          <span className="text-xs text-[var(--fg-muted)]">{k.roleTitle.trim()}</span>
+                        )}
+                      </div>
+                      <Link
+                        href={`/companies/${company.id}`}
+                        className="mt-0.5 flex max-w-full min-w-0 items-center gap-1.5 text-xs text-[var(--fg-muted)] hover:text-[var(--fg)]"
+                      >
+                        {company.accentColor ? (
+                          <span
+                            className="h-2.5 w-2.5 shrink-0 rounded-full border border-[var(--hairline)]"
+                            style={{ backgroundColor: company.accentColor }}
+                            aria-hidden
+                          />
+                        ) : (
+                          <span
+                            className="h-2.5 w-2.5 shrink-0 rounded-full border border-[var(--hairline)] bg-[var(--fg-muted)] opacity-40"
+                            aria-hidden
+                          />
+                        )}
+                        <span className="truncate">{company.name}</span>
+                      </Link>
+                    </div>
+                    <div className="hidden min-w-0 flex-col items-center justify-center gap-0.5 text-center text-xs text-[var(--fg-muted)] md:flex">
+                      <div className="min-w-0 max-w-full truncate">
+                        {k.email ? (
+                          <MailtoLink
+                            email={k.email}
+                            className="text-[var(--fg-muted)] hover:text-[var(--fg)] hover:underline"
+                          />
+                        ) : (
+                          <span>—</span>
+                        )}
+                      </div>
+                      <div className="min-w-0 max-w-full truncate">
+                        {k.phone ? (
+                          <TelLink
+                            phone={k.phone}
+                            className="text-[var(--fg-muted)] hover:text-[var(--fg)] hover:underline"
+                          />
+                        ) : (
+                          <span>—</span>
+                        )}
+                      </div>
+                    </div>
+                    <div className="hidden min-w-0 md:block" aria-hidden />
                   </div>
                 </li>
               ))}
-              {contacts.length === 0 && (
-                <li className="px-3 py-10 text-center text-[var(--fg-muted)]">Keine Kontakte.</li>
-              )}
-            </ul>
-          </div>
+            {contacts.length === 0 && (
+              <li className="py-10 text-center text-xs text-[var(--fg-muted)]">Keine Kontakte.</li>
+            )}
+          </ul>
         </section>
       )}
       </div>
