@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using ValentinRSM.Api.Contracts;
 using ValentinRSM.Api.Data;
 using ValentinRSM.Api.Entities;
+using ValentinRSM.Api.Enums;
 
 namespace ValentinRSM.Api.Controllers;
 
@@ -17,6 +18,45 @@ public class CompaniesController(ValentinRsmDbContext db) : ControllerBase
             .OrderBy(c => c.Name)
             .Select(c => ToResponse(c))
             .ToListAsync(ct);
+        return Ok(list);
+    }
+
+    /// <summary>
+    /// Firmen mit Status Aktiv oder Im Blick, bei denen es Timeline-Einträge gibt,
+    /// absteigend nach dem neuesten Ereignisdatum (OccurredAt).
+    /// </summary>
+    [HttpGet("recent-timeline-activity")]
+    public async Task<ActionResult<IReadOnlyList<CompanyRecentActivityResponse>>> RecentTimelineActivity(
+        [FromQuery] int take = 5,
+        CancellationToken ct = default)
+    {
+        take = Math.Clamp(take, 1, 50);
+        var aggregated = await db.TimelineEntries.AsNoTracking()
+            .Join(db.Companies.AsNoTracking(), e => e.CompanyId, c => c.Id, (e, c) => new { e, c })
+            .Where(x => x.c.Status == CompanyStatus.Active || x.c.Status == CompanyStatus.InFocus)
+            .GroupBy(x => x.c.Id)
+            .Select(g => new { CompanyId = g.Key, LastAt = g.Max(x => x.e.OccurredAt) })
+            .OrderByDescending(x => x.LastAt)
+            .Take(take)
+            .ToListAsync(ct);
+
+        if (aggregated.Count == 0)
+            return Ok(Array.Empty<CompanyRecentActivityResponse>());
+
+        var ids = aggregated.Select(a => a.CompanyId).ToList();
+        var companies = await db.Companies.AsNoTracking()
+            .Where(c => ids.Contains(c.Id))
+            .ToDictionaryAsync(c => c.Id, ct);
+
+        var list = aggregated
+            .Where(a => companies.ContainsKey(a.CompanyId))
+            .Select(a =>
+            {
+                var c = companies[a.CompanyId];
+                return new CompanyRecentActivityResponse(c.Id, c.Name, c.Type, c.Status, c.AccentColor, a.LastAt);
+            })
+            .ToList();
+
         return Ok(list);
     }
 

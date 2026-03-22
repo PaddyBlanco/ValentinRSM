@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import { ContactForm } from "@/components/contacts/contact-form";
 import { MailtoLink, TelLink } from "@/components/contacts/contact-links";
 import { Modal } from "@/components/ui/modal";
@@ -14,11 +14,14 @@ function ContactsPageInner() {
   const searchParams = useSearchParams();
   const [rows, setRows] = useState<Contact[]>([]);
   const [companies, setCompanies] = useState<Company[]>([]);
+  const [query, setQuery] = useState("");
   const [err, setErr] = useState<string | null>(null);
   const [createOpen, setCreateOpen] = useState(false);
   const [createFormKey, setCreateFormKey] = useState(0);
   const [defaultCompanyId, setDefaultCompanyId] = useState("");
   const [lockCompany, setLockCompany] = useState(false);
+
+  const companyById = useMemo(() => new Map(companies.map((c) => [c.id, c])), [companies]);
 
   useEffect(() => {
     let c = false;
@@ -39,6 +42,28 @@ function ContactsPageInner() {
     };
   }, []);
 
+  const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    const list = !q
+      ? rows
+      : rows.filter((k) => {
+          const co = companyById.get(k.companyId);
+          const companyName = co?.name?.toLowerCase() ?? "";
+          return (
+            `${k.firstName} ${k.lastName}`.toLowerCase().includes(q) ||
+            (k.email?.toLowerCase()?.includes(q) ?? false) ||
+            (k.phone?.toLowerCase()?.includes(q) ?? false) ||
+            companyName.includes(q) ||
+            (k.roleTitle?.toLowerCase()?.includes(q) ?? false)
+          );
+        });
+    return [...list].sort((a, b) => {
+      const ln = a.lastName.localeCompare(b.lastName, "de", { sensitivity: "base" });
+      if (ln !== 0) return ln;
+      return a.firstName.localeCompare(b.firstName, "de", { sensitivity: "base" });
+    });
+  }, [rows, query, companyById]);
+
   useEffect(() => {
     if (searchParams.get("new") !== "1") return;
     const cid = searchParams.get("companyId")?.trim() ?? "";
@@ -52,88 +77,129 @@ function ContactsPageInner() {
   const companyOpts = companies.map((x) => ({ id: x.id, name: x.name }));
 
   return (
-    <main className="p-6 md:p-10">
-      <header className="mb-8 flex flex-col gap-4 border-b border-[var(--hairline)] pb-6 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <h1 className="text-xl font-medium">Kontakte</h1>
-          <p className="mt-1 text-sm text-[var(--fg-muted)]">Alle Kontakte alphabetisch.</p>
-          {err && <p className="mt-2 text-sm text-red-500">{err}</p>}
-        </div>
-        <button
-          type="button"
-          className="inline-flex w-fit items-center rounded-sm border border-[var(--hairline)] bg-[var(--hover)] px-4 py-2 text-sm font-medium hover:bg-[var(--hairline)]"
-          onClick={() => {
-            setDefaultCompanyId("");
-            setLockCompany(false);
-            setCreateFormKey((k) => k + 1);
-            setCreateOpen(true);
-          }}
-        >
-          Neuer Kontakt
-        </button>
-      </header>
-
-      <div className="overflow-x-auto border border-[var(--hairline)]">
-        <table className="w-full min-w-[640px] text-left text-sm">
-          <thead>
-            <tr className="border-b border-[var(--hairline)] text-xs uppercase tracking-wide text-[var(--fg-muted)]">
-              <th className="px-4 py-3 font-medium">Name</th>
-              <th className="px-4 py-3 font-medium">E-Mail</th>
-              <th className="px-4 py-3 font-medium">Telefon</th>
-              <th className="px-4 py-3 font-medium">Firma</th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((r) => (
-              <tr key={r.id} className="border-b border-[var(--hairline)] last:border-0">
-                <td className="px-4 py-3">
-                  <Link href={`/contacts/${r.id}`} className="hover:underline">
-                    {r.firstName} {r.lastName}
-                  </Link>
-                </td>
-                <td className="px-4 py-3 text-[var(--fg-muted)]">
-                  {r.email ? <MailtoLink email={r.email} /> : "—"}
-                </td>
-                <td className="px-4 py-3 text-[var(--fg-muted)]">
-                  {r.phone ? <TelLink phone={r.phone} /> : "—"}
-                </td>
-                <td className="px-4 py-3">
-                  <Link href={`/companies/${r.companyId}`} className="text-[var(--fg-muted)] hover:text-[var(--fg)]">
-                    Öffnen
-                  </Link>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-        {rows.length === 0 && !err && (
-          <p className="p-6 text-sm text-[var(--fg-muted)]">Keine Kontakte.</p>
-        )}
-      </div>
-
-      <Modal open={createOpen} onClose={() => setCreateOpen(false)} title="Neuer Kontakt" wide>
-        {companies.length === 0 && !err ? (
-          <p className="text-sm text-[var(--fg-muted)]">Firmen werden geladen…</p>
-        ) : (
-          <ContactForm
-            key={createFormKey}
-            compact
-            defaultCompanyId={defaultCompanyId}
-            companies={companyOpts}
-            lockCompany={lockCompany}
-            submitLabel="Kontakt anlegen"
-            onSubmit={async (body) => {
-              const k = await createContact(body);
-              setCreateOpen(false);
-              const [data, co] = await Promise.all([fetchContacts(), fetchCompanies()]);
-              setRows(data);
-              setCompanies(co);
-              router.push(`/contacts/${k.id}`);
+    <main className="p-4 md:p-8">
+      <div className="mx-auto w-[98%] max-w-full md:w-[80%]">
+        <header className="mb-3 flex flex-wrap items-center justify-between gap-2 border-b border-[var(--hairline)] pb-3">
+          <h1 className="text-lg font-medium">Kontakte</h1>
+          <button
+            type="button"
+            className="inline-flex shrink-0 items-center rounded-sm border border-[var(--hairline)] bg-[var(--hover)] px-2.5 py-1 text-xs font-medium hover:bg-[var(--hairline)]"
+            onClick={() => {
+              setDefaultCompanyId("");
+              setLockCompany(false);
+              setCreateFormKey((k) => k + 1);
+              setCreateOpen(true);
             }}
-            onCancel={() => setCreateOpen(false)}
+          >
+            Neu
+          </button>
+        </header>
+
+        {err && <p className="mb-2 text-xs text-red-500">{err}</p>}
+
+        <div className="mb-2">
+          <label htmlFor="contact-search" className="sr-only">
+            Kontakte durchsuchen
+          </label>
+          <input
+            id="contact-search"
+            type="search"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Suchen…"
+            autoComplete="off"
+            className="w-full max-w-md rounded border border-[var(--hairline)] bg-[var(--bg)] px-2 py-1 text-sm text-[var(--fg)] placeholder:text-[var(--fg-muted)] focus:outline-none focus:ring-1 focus:ring-[var(--fg-muted)]"
           />
+        </div>
+
+        <ul className="divide-y divide-[var(--hairline)] border-y border-[var(--hairline)]">
+          {filtered.map((k) => {
+            const co = companyById.get(k.companyId);
+            return (
+              <li key={k.id}>
+                <div className="grid grid-cols-1 gap-y-2 py-1.5 pr-1 text-sm hover:bg-[var(--hover)] md:grid-cols-[1fr_auto_1fr] md:items-center md:gap-x-4 md:gap-y-0">
+                  <div className="min-w-0">
+                    <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+                      <Link href={`/contacts/${k.id}`} className="shrink-0 font-medium hover:underline">
+                        {k.firstName} {k.lastName}
+                      </Link>
+                      {k.roleTitle?.trim() && (
+                        <span className="text-xs text-[var(--fg-muted)]">{k.roleTitle.trim()}</span>
+                      )}
+                    </div>
+                    <Link
+                      href={`/companies/${k.companyId}`}
+                      className="mt-0.5 flex max-w-full min-w-0 items-center gap-1.5 text-xs text-[var(--fg-muted)] hover:text-[var(--fg)]"
+                    >
+                      {co?.accentColor ? (
+                        <span
+                          className="h-2 w-2.5 shrink-0 rounded-full border border-[var(--hairline)]"
+                          style={{ backgroundColor: co.accentColor }}
+                          aria-hidden
+                        />
+                      ) : (
+                        <span
+                          className="h-2 w-2.5 shrink-0 rounded-full bg-[var(--fg-muted)] opacity-40"
+                          aria-hidden
+                        />
+                      )}
+                      <span className="truncate">{co?.name ?? "Firma"}</span>
+                    </Link>
+                  </div>
+                  <div className="hidden min-w-0 flex-col items-center justify-center gap-0.5 text-center text-xs text-[var(--fg-muted)] md:flex">
+                    <div className="min-w-0 max-w-full truncate">
+                      {k.email ? (
+                        <MailtoLink email={k.email} className="text-[var(--fg-muted)] hover:text-[var(--fg)] hover:underline" />
+                      ) : (
+                        <span>—</span>
+                      )}
+                    </div>
+                    <div className="min-w-0 max-w-full truncate">
+                      {k.phone ? (
+                        <TelLink phone={k.phone} className="text-[var(--fg-muted)] hover:text-[var(--fg)] hover:underline" />
+                      ) : (
+                        <span>—</span>
+                      )}
+                    </div>
+                  </div>
+                  <div className="hidden min-w-0 md:block" aria-hidden />
+                </div>
+              </li>
+            );
+          })}
+        </ul>
+
+        {rows.length === 0 && !err && (
+          <p className="mt-3 text-xs text-[var(--fg-muted)]">Keine Kontakte.</p>
         )}
-      </Modal>
+        {rows.length > 0 && filtered.length === 0 && (
+          <p className="mt-3 text-xs text-[var(--fg-muted)]">Keine Treffer.</p>
+        )}
+
+        <Modal open={createOpen} onClose={() => setCreateOpen(false)} title="Neuer Kontakt" wide>
+          {companies.length === 0 && !err ? (
+            <p className="text-sm text-[var(--fg-muted)]">Firmen werden geladen…</p>
+          ) : (
+            <ContactForm
+              key={createFormKey}
+              compact
+              defaultCompanyId={defaultCompanyId}
+              companies={companyOpts}
+              lockCompany={lockCompany}
+              submitLabel="Kontakt anlegen"
+              onSubmit={async (body) => {
+                const k = await createContact(body);
+                setCreateOpen(false);
+                const [data, co] = await Promise.all([fetchContacts(), fetchCompanies()]);
+                setRows(data);
+                setCompanies(co);
+                router.push(`/contacts/${k.id}`);
+              }}
+              onCancel={() => setCreateOpen(false)}
+            />
+          )}
+        </Modal>
+      </div>
     </main>
   );
 }
@@ -142,8 +208,10 @@ export default function ContactsPage() {
   return (
     <Suspense
       fallback={
-        <main className="p-6 md:p-10">
-          <p className="text-sm text-[var(--fg-muted)]">Laden…</p>
+        <main className="p-4 md:p-8">
+          <div className="mx-auto w-[98%] max-w-full md:w-[80%]">
+            <p className="text-sm text-[var(--fg-muted)]">Laden…</p>
+          </div>
         </main>
       }
     >

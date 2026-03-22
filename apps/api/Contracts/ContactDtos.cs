@@ -12,7 +12,9 @@ public record ContactResponse(
     string? CapabilityNote,
     string? Notes,
     DateTimeOffset CreatedAt,
-    DateTimeOffset UpdatedAt);
+    DateTimeOffset UpdatedAt,
+    /// <summary>Neuester Zeitpunkt eines Timeline-Eintrags mit diesem Kontakt (ContactId), sonst null.</summary>
+    DateTimeOffset? LastTimelineAt = null);
 
 public record CreateContactRequest(
     Guid CompanyId,

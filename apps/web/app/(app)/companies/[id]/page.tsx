@@ -136,7 +136,7 @@ export default function CompanyDetailPage() {
 
   return (
     <main className="p-6 md:p-10">
-      <div className="mx-auto w-[80%] max-w-full">
+      <div className="mx-auto w-[98%] max-w-full md:w-[80%]">
       <header className="border-b border-[var(--hairline)] pb-6">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="flex flex-wrap items-start gap-3">

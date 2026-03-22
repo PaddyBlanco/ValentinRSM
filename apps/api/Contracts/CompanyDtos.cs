@@ -25,3 +25,12 @@ public record UpdateCompanyRequest(
     CompanyStatus Status,
     string? AccentColor,
     string? Notes);
+
+/// <summary>Firmen mit Status Aktiv/Im Blick, sortiert nach letzter Timeline-Aktivität.</summary>
+public record CompanyRecentActivityResponse(
+    Guid Id,
+    string Name,
+    string Type,
+    CompanyStatus Status,
+    string? AccentColor,
+    DateTimeOffset LastTimelineAt);

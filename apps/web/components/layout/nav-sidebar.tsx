@@ -39,7 +39,7 @@ export function NavSidebar() {
       try {
         const [c, e] = await Promise.all([
           fetchCompanies(),
-          fetchTimeline({ take: 10 }),
+          fetchTimeline({ take: 5 }),
         ]);
         if (!cancelled) {
           setCompanies(c);
@@ -153,7 +153,7 @@ export function NavSidebar() {
 
       <div className="flex min-h-0 flex-1 flex-col px-3 py-3">
         <p className="mb-2 shrink-0 text-[10px] font-medium uppercase tracking-wide text-[var(--fg-muted)]">
-          Letzte 10 Ereignisse
+          Letzte 5 Ereignisse
         </p>
         <ul className="min-h-0 flex-1 space-y-2 overflow-y-auto overscroll-contain text-xs">
           {events.length === 0 && !err ? (

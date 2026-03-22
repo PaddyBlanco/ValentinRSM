@@ -19,14 +19,18 @@ public record SearchContactHit(
     Guid Id,
     Guid CompanyId,
     string CompanyName,
+    string? CompanyAccentColor,
     string FirstName,
     string LastName,
-    string? Email);
+    string? Email,
+    string? Phone,
+    string? RoleTitle);
 
 public record SearchTimelineHit(
     Guid Id,
     Guid CompanyId,
     string CompanyName,
+    string? CompanyAccentColor,
     Guid? ContactId,
     string? ContactName,
     string Title,

@@ -24,6 +24,8 @@ export type Contact = {
   notes: string | null;
   createdAt: string;
   updatedAt: string;
+  /** Neuester Timeline-Eintrag mit diesem Kontakt (ContactId), sonst null */
+  lastTimelineAt?: string | null;
 };
 
 export type TimelineEntry = {
@@ -210,6 +212,25 @@ export async function fetchCompany(id: string): Promise<Company> {
   return fetchJson<Company>(`/api/companies/${encodeURIComponent(id)}`);
 }
 
+/** Firmen Aktiv/Im Blick mit letztem Timeline-Ereignis (Startseite). */
+export type CompanyRecentActivity = {
+  id: string;
+  name: string;
+  type: string;
+  status: CompanyStatus;
+  accentColor: string | null;
+  lastTimelineAt: string;
+};
+
+export async function fetchCompaniesRecentTimelineActivity(take?: number): Promise<CompanyRecentActivity[]> {
+  const sp = new URLSearchParams();
+  if (take != null) sp.set("take", String(take));
+  const q = sp.toString();
+  return fetchJson<CompanyRecentActivity[]>(
+    `/api/companies/recent-timeline-activity${q ? `?${q}` : ""}`,
+  );
+}
+
 export async function fetchContact(id: string): Promise<Contact> {
   return fetchJson<Contact>(`/api/contacts/${encodeURIComponent(id)}`);
 }
@@ -255,15 +276,19 @@ export type SearchContactHit = {
   id: string;
   companyId: string;
   companyName: string;
+  companyAccentColor: string | null;
   firstName: string;
   lastName: string;
   email: string | null;
+  phone: string | null;
+  roleTitle: string | null;
 };
 
 export type SearchTimelineHit = {
   id: string;
   companyId: string;
   companyName: string;
+  companyAccentColor: string | null;
   contactId: string | null;
   contactName: string | null;
   title: string;
@@ -285,6 +310,24 @@ export async function fetchSearch(q: string, take?: number): Promise<SearchRespo
   sp.set("q", q);
   if (take != null) sp.set("take", String(take));
   return fetchJson<SearchResponse>(`/api/search?${sp.toString()}`);
+}
+
+/** Such-API: Kennfarbe Firmenzeile (`accentColor` / `AccentColor`). */
+export function pickSearchHitAccentColor(hit: unknown): string | null {
+  if (hit == null || typeof hit !== "object") return null;
+  const o = hit as Record<string, unknown>;
+  const raw = o.accentColor ?? o.AccentColor;
+  if (typeof raw === "string" && raw.trim()) return raw.trim();
+  return null;
+}
+
+/** Such-API: Kennfarbe bei Kontakt/Ereignis (`companyAccentColor` / `CompanyAccentColor`). */
+export function pickSearchCompanyAccentColor(hit: unknown): string | null {
+  if (hit == null || typeof hit !== "object") return null;
+  const o = hit as Record<string, unknown>;
+  const raw = o.companyAccentColor ?? o.CompanyAccentColor;
+  if (typeof raw === "string" && raw.trim()) return raw.trim();
+  return null;
 }
 
 export function formatDateTime(iso: string): string {

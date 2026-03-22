@@ -29,7 +29,20 @@ public class ContactsController(ValentinRsmDbContext db) : ControllerBase
             q = q.Take(Math.Min(take.Value, 200));
 
         var list = await q
-            .Select(x => ToResponse(x))
+            .Select(c => new ContactResponse(
+                c.Id,
+                c.CompanyId,
+                c.FirstName,
+                c.LastName,
+                c.Email,
+                c.Phone,
+                c.RoleTitle,
+                c.KnowsFrom,
+                c.CapabilityNote,
+                c.Notes,
+                c.CreatedAt,
+                c.UpdatedAt,
+                db.TimelineEntries.Where(t => t.ContactId == c.Id).Select(t => (DateTimeOffset?)t.OccurredAt).Max()))
             .ToListAsync(ct);
         return Ok(list);
     }
@@ -37,8 +50,24 @@ public class ContactsController(ValentinRsmDbContext db) : ControllerBase
     [HttpGet("{id:guid}")]
     public async Task<ActionResult<ContactResponse>> Get(Guid id, CancellationToken ct)
     {
-        var c = await db.Contacts.AsNoTracking().FirstOrDefaultAsync(x => x.Id == id, ct);
-        return c is null ? NotFound() : Ok(ToResponse(c));
+        var c = await db.Contacts.AsNoTracking()
+            .Where(x => x.Id == id)
+            .Select(x => new ContactResponse(
+                x.Id,
+                x.CompanyId,
+                x.FirstName,
+                x.LastName,
+                x.Email,
+                x.Phone,
+                x.RoleTitle,
+                x.KnowsFrom,
+                x.CapabilityNote,
+                x.Notes,
+                x.CreatedAt,
+                x.UpdatedAt,
+                db.TimelineEntries.Where(t => t.ContactId == x.Id).Select(t => (DateTimeOffset?)t.OccurredAt).Max()))
+            .FirstOrDefaultAsync(ct);
+        return c is null ? NotFound() : Ok(c);
     }
 
     [HttpPost]

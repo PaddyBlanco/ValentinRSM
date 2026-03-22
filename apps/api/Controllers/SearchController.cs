@@ -55,9 +55,12 @@ public class SearchController(ValentinRsmDbContext db) : ControllerBase
                 c.Id,
                 c.CompanyId,
                 c.Company.Name,
+                c.Company.AccentColor,
                 c.FirstName,
                 c.LastName,
-                c.Email))
+                c.Email,
+                c.Phone,
+                c.RoleTitle))
             .ToListAsync(ct);
 
         var timelineRows = await db.TimelineEntries.AsNoTracking()
@@ -77,6 +80,7 @@ public class SearchController(ValentinRsmDbContext db) : ControllerBase
                 e.Id,
                 e.CompanyId,
                 e.Company.Name,
+                e.Company.AccentColor,
                 e.ContactId,
                 contactName,
                 e.Title,
