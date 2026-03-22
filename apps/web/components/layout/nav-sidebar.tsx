@@ -168,7 +168,8 @@ export function NavSidebar() {
                     <div className="flex gap-2.5">
                       <TimelineEntryTypeIcon
                         type={ev.type}
-                        className="mt-0.5 h-4 w-4 shrink-0 opacity-90"
+                        colorful
+                        className="mt-0.5 h-4 w-4 shrink-0"
                       />
                       <div className="min-w-0 flex-1">
                         <span className="line-clamp-2 text-[var(--fg-muted)]">{ev.title}</span>

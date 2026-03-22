@@ -8,7 +8,8 @@ import { ContactForm } from "@/components/contacts/contact-form";
 import { MailtoLink } from "@/components/contacts/contact-links";
 import { Modal } from "@/components/ui/modal";
 import { TimelineEntryForm } from "@/components/timeline/timeline-entry-form";
-import { TimelineEntryTypeIcon } from "@/components/timeline/timeline-entry-type";
+import { TimelineHtmlContent } from "@/components/timeline/timeline-html-content";
+import { TimelineEntryTypeStamp } from "@/components/timeline/timeline-entry-type";
 import { buttonDangerClass, buttonGhostClass } from "@/lib/form-styles";
 import type { Company, Contact, CreateCompanyBody, TimelineEntry } from "@/lib/api";
 import {
@@ -18,12 +19,13 @@ import {
   deleteTimelineEntry,
   fetchCompany,
   fetchContacts,
-  fetchTimeline,
   formatDateTime,
   updateCompany,
   updateTimelineEntry,
 } from "@/lib/api";
 import { timelineContentNeedsExpand } from "@/lib/timeline-entry-content";
+import { useInfiniteTimeline } from "@/lib/use-infinite-timeline";
+import { TimelineLoadSentinel } from "@/components/timeline/timeline-load-sentinel";
 import { useBumpNavRefresh } from "@/components/layout/nav-refresh-context";
 
 const statusLabel: Record<string, string> = {
@@ -40,7 +42,6 @@ export default function CompanyDetailPage() {
   const id = params.id as string;
   const [company, setCompany] = useState<Company | null>(null);
   const [contacts, setContacts] = useState<Contact[]>([]);
-  const [timeline, setTimeline] = useState<TimelineEntry[]>([]);
   const [err, setErr] = useState<string | null>(null);
   const [editCompanyOpen, setEditCompanyOpen] = useState(false);
   const [newContactOpen, setNewContactOpen] = useState(false);
@@ -52,15 +53,21 @@ export default function CompanyDetailPage() {
   const [timelineExpanded, setTimelineExpanded] = useState<Record<string, boolean>>({});
   const [companyTab, setCompanyTab] = useState<"timeline" | "contacts">("timeline");
 
+  const {
+    items: timeline,
+    loading: timelineLoading,
+    loadingMore: timelineLoadingMore,
+    hasMore: timelineHasMore,
+    err: timelineErr,
+    loadMore: loadMoreTimeline,
+    refresh: refreshTimeline,
+  } = useInfiniteTimeline({ companyId: id }, { enabled: Boolean(id) });
+
   async function reload() {
-    const [co, ct, tl] = await Promise.all([
-      fetchCompany(id),
-      fetchContacts({ companyId: id }),
-      fetchTimeline({ companyId: id, take: 50 }),
-    ]);
+    const [co, ct] = await Promise.all([fetchCompany(id), fetchContacts({ companyId: id })]);
     setCompany(co);
     setContacts(ct);
-    setTimeline(tl);
+    await refreshTimeline();
   }
 
   useEffect(() => {
@@ -68,15 +75,10 @@ export default function CompanyDetailPage() {
     let c = false;
     (async () => {
       try {
-        const [co, ct, tl] = await Promise.all([
-          fetchCompany(id),
-          fetchContacts({ companyId: id }),
-          fetchTimeline({ companyId: id, take: 50 }),
-        ]);
+        const [co, ct] = await Promise.all([fetchCompany(id), fetchContacts({ companyId: id })]);
         if (!c) {
           setCompany(co);
           setContacts(ct);
-          setTimeline(tl);
           setErr(null);
         }
       } catch (e: unknown) {
@@ -274,7 +276,7 @@ export default function CompanyDetailPage() {
           open={editingTimeline !== null}
           onClose={() => setEditingTimeline(null)}
           title="Timeline-Eintrag bearbeiten"
-          wide
+          xlarge
           footer={
             editingTimeline ? (
               <button
@@ -291,6 +293,7 @@ export default function CompanyDetailPage() {
             <TimelineEntryForm
               key={`${editingTimeline.id}-${timelineEditFormKey}`}
               compact
+              largeEditor
               companyId={company.id}
               contacts={contactOptions}
               initial={editingTimeline}
@@ -311,6 +314,10 @@ export default function CompanyDetailPage() {
           )}
         </Modal>
 
+        {timelineErr && <p className="mb-3 text-sm text-red-500">{timelineErr}</p>}
+        {timelineLoading && (
+          <p className="mb-4 text-sm text-[var(--fg-muted)]">Timeline wird geladen…</p>
+        )}
         <ul className="w-full space-y-4">
           {timeline.map((ev) => {
             const contentLong = ev.content ? timelineContentNeedsExpand(ev.content) : false;
@@ -319,11 +326,7 @@ export default function CompanyDetailPage() {
               <li key={ev.id}>
                 <article className="overflow-hidden rounded-2xl border border-[var(--hairline)] bg-[var(--bg-elevated)] shadow-sm">
                   <div className="flex gap-3 p-4 sm:gap-4 sm:p-5">
-                    <div className="shrink-0 pt-0.5">
-                      <span className="flex h-11 w-11 items-center justify-center rounded-full bg-[var(--hover)] text-[var(--fg-muted)]">
-                        <TimelineEntryTypeIcon type={ev.type} className="h-6 w-6" />
-                      </span>
-                    </div>
+                    <TimelineEntryTypeStamp type={ev.type} />
                     <div className="min-w-0 flex-1">
                       <div className="flex flex-wrap items-start justify-between gap-2 gap-y-1">
                         <h3 className="text-base font-semibold leading-snug text-[var(--fg)]">{ev.title}</h3>
@@ -357,13 +360,13 @@ export default function CompanyDetailPage() {
                       </p>
                       {ev.content && (
                         <div className="mt-3">
-                          <p
-                            className={`whitespace-pre-wrap text-sm leading-relaxed text-[var(--fg)] ${
-                              contentLong && !contentExpanded ? "line-clamp-6" : ""
-                            }`}
+                          <div
+                            className={
+                              contentLong && !contentExpanded ? "line-clamp-6 overflow-hidden" : ""
+                            }
                           >
-                            {ev.content}
-                          </p>
+                            <TimelineHtmlContent content={ev.content} />
+                          </div>
                           {contentLong && (
                             <button
                               type="button"
@@ -387,12 +390,22 @@ export default function CompanyDetailPage() {
               </li>
             );
           })}
-          {timeline.length === 0 && (
+          {!timelineLoading && timeline.length === 0 && (
             <li className="rounded-2xl border border-dashed border-[var(--hairline)] py-12 text-center text-sm text-[var(--fg-muted)]">
               Noch keine Einträge.
             </li>
           )}
         </ul>
+        {!timelineLoading && timelineHasMore && (
+          <TimelineLoadSentinel
+            onLoadMore={loadMoreTimeline}
+            hasMore={timelineHasMore}
+            loadingInitial={timelineLoading}
+          />
+        )}
+        {timelineLoadingMore && (
+          <p className="mt-3 text-center text-xs text-[var(--fg-muted)]">Weitere Einträge werden geladen…</p>
+        )}
       </section>
       )}
 

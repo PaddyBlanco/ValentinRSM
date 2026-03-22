@@ -7,6 +7,7 @@ import { ContactForm } from "@/components/contacts/contact-form";
 import { MailtoLink, TelLink } from "@/components/contacts/contact-links";
 import { Modal } from "@/components/ui/modal";
 import { TimelineEntryForm } from "@/components/timeline/timeline-entry-form";
+import { TimelineHtmlContent } from "@/components/timeline/timeline-html-content";
 import { TimelineEntryTypeBadge } from "@/components/timeline/timeline-entry-type";
 import { buttonDangerClass, buttonGhostClass } from "@/lib/form-styles";
 import type { Company, Contact, CreateContactBody, TimelineEntry } from "@/lib/api";
@@ -212,7 +213,7 @@ export default function ContactDetailPage() {
           open={editingTimeline !== null}
           onClose={() => setEditingTimeline(null)}
           title="Timeline-Eintrag bearbeiten"
-          wide
+          xlarge
           footer={
             editingTimeline ? (
               <button
@@ -229,6 +230,7 @@ export default function ContactDetailPage() {
             <TimelineEntryForm
               key={`${editingTimeline.id}-${timelineEditFormKey}`}
               compact
+              largeEditor
               companyId={contact.companyId}
               contacts={contactOptions}
               initial={editingTimeline}
@@ -279,13 +281,13 @@ export default function ContactDetailPage() {
                 </div>
                 {ev.content && (
                   <div className="mt-2">
-                    <p
-                      className={`whitespace-pre-wrap text-[var(--fg-muted)] ${
-                        contentLong && !contentExpanded ? "line-clamp-6" : ""
+                    <div
+                      className={`text-[var(--fg-muted)] ${
+                        contentLong && !contentExpanded ? "line-clamp-6 overflow-hidden" : ""
                       }`}
                     >
-                      {ev.content}
-                    </p>
+                      <TimelineHtmlContent content={ev.content} />
+                    </div>
                     {contentLong && (
                       <button
                         type="button"

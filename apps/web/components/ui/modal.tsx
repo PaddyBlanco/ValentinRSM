@@ -9,6 +9,8 @@ export function Modal({
   children,
   footer,
   wide,
+  /** Sehr breit/hoch (z. B. Timeline bearbeiten mit Rich-Text) */
+  xlarge,
 }: {
   open: boolean;
   onClose: () => void;
@@ -16,6 +18,7 @@ export function Modal({
   children: ReactNode;
   footer?: ReactNode;
   wide?: boolean;
+  xlarge?: boolean;
 }) {
   useEffect(() => {
     if (!open) return;
@@ -49,8 +52,12 @@ export function Modal({
         role="dialog"
         aria-modal
         aria-labelledby="modal-title"
-        className={`relative z-10 flex max-h-[min(92vh,880px)] w-full flex-col border border-[var(--hairline)] bg-[var(--bg)] shadow-xl ${
-          wide ? "max-w-2xl" : "max-w-lg"
+        className={`relative z-10 flex w-full flex-col border border-[var(--hairline)] bg-[var(--bg)] shadow-xl ${
+          xlarge
+            ? "max-h-[min(96vh,920px)] max-w-[min(96vw,72rem)]"
+            : wide
+              ? "max-h-[min(92vh,880px)] max-w-2xl"
+              : "max-h-[min(92vh,880px)] max-w-lg"
         }`}
         onClick={(e) => e.stopPropagation()}
       >
@@ -67,7 +74,11 @@ export function Modal({
             ×
           </button>
         </div>
-        <div className="min-h-0 flex-1 overflow-y-auto p-4">{children}</div>
+        <div
+          className={`min-h-0 flex-1 overflow-y-auto ${xlarge ? "p-5 sm:p-6" : "p-4"}`}
+        >
+          {children}
+        </div>
         {footer != null && footer !== false && (
           <div className="shrink-0 border-t border-[var(--hairline)] px-4 py-3">{footer}</div>
         )}

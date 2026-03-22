@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using ValentinRSM.Api.Contracts;
 using ValentinRSM.Api.Data;
+using ValentinRSM.Api.Html;
 
 namespace ValentinRSM.Api.Controllers;
 
@@ -79,7 +80,7 @@ public class SearchController(ValentinRsmDbContext db) : ControllerBase
                 e.ContactId,
                 contactName,
                 e.Title,
-                Preview(e.Content),
+                Preview(TimelineHtmlSanitizer.ToPlainText(e.Content)),
                 e.OccurredAt,
                 e.Type,
                 e.Source);
@@ -88,9 +89,9 @@ public class SearchController(ValentinRsmDbContext db) : ControllerBase
         return Ok(new SearchResponse(raw, companies, contacts, timeline));
     }
 
-    private static string Preview(string content, int max = 220)
+    private static string Preview(string plainText, int max = 220)
     {
-        var s = content.ReplaceLineEndings(" ").Trim();
+        var s = plainText.ReplaceLineEndings(" ").Trim();
         if (s.Length <= max) return s;
         return s[..max] + "…";
     }

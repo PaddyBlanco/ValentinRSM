@@ -4,7 +4,9 @@ import { useEffect, useState, type FormEvent } from "react";
 import type { CreateTimelineBody, TimelineEntry, TimelineEntryType, TimelineSource } from "@/lib/api";
 import { buttonGhostClass, buttonPrimaryClass, inputClass, labelClass } from "@/lib/form-styles";
 import { datetimeLocalToIso, isoToDatetimeLocal, nowDatetimeLocal } from "@/lib/datetime-local";
+import { TimelineContentEditor } from "@/components/timeline/timeline-content-editor";
 import { TIMELINE_ENTRY_TYPES, timelineEntryTypeMeta } from "@/components/timeline/timeline-entry-type";
+import { sanitizeTimelineHtml } from "@/lib/sanitize-timeline-html";
 
 const sourceOptions: { value: TimelineSource; label: string }[] = [
   { value: "manual", label: "Manuell" },
@@ -24,6 +26,8 @@ export function TimelineEntryForm({
   defaultContactId,
   initial,
   compact,
+  /** Größerer Inhalts-Editor (z. B. Bearbeiten-Modal) */
+  largeEditor,
   submitLabel,
   onSubmit,
   onCancel,
@@ -35,16 +39,22 @@ export function TimelineEntryForm({
   initial?: TimelineEntry | null;
   /** ohne äußeren Rahmen (z. B. im Modal) */
   compact?: boolean;
+  largeEditor?: boolean;
   submitLabel: string;
   onSubmit: (body: CreateTimelineBody) => Promise<void>;
   onCancel?: () => void;
 }) {
-  const [contactId, setContactId] = useState(defaultContactId ?? EMPTY_CONTACT);
-  const [type, setType] = useState<TimelineEntryType>("manualNote");
-  const [source, setSource] = useState<TimelineSource>("manual");
-  const [title, setTitle] = useState("");
-  const [content, setContent] = useState("");
-  const [occurredLocal, setOccurredLocal] = useState(nowDatetimeLocal());
+  const [contactId, setContactId] = useState(() =>
+    initial ? (initial.contactId ?? EMPTY_CONTACT) : (defaultContactId ?? EMPTY_CONTACT),
+  );
+  const [type, setType] = useState<TimelineEntryType>(() => (initial?.type as TimelineEntryType) ?? "manualNote");
+  const [source, setSource] = useState<TimelineSource>(() => (initial?.source as TimelineSource) ?? "manual");
+  const [title, setTitle] = useState(() => initial?.title ?? "");
+  /** Sofort aus initial — sonst ist Tiptap beim ersten Render leer und übernimmt den Text nicht nach. */
+  const [content, setContent] = useState(() => initial?.content ?? "");
+  const [occurredLocal, setOccurredLocal] = useState(() =>
+    initial ? isoToDatetimeLocal(initial.occurredAt) : nowDatetimeLocal(),
+  );
   const [busy, setBusy] = useState(false);
   const [formErr, setFormErr] = useState<string | null>(null);
 
@@ -82,7 +92,7 @@ export function TimelineEntryForm({
         type,
         source,
         title: t,
-        content: content,
+        content: sanitizeTimelineHtml(content),
         occurredAt: datetimeLocalToIso(occurredLocal),
       });
     } catch (err: unknown) {
@@ -171,16 +181,10 @@ export function TimelineEntryForm({
         <input id="tl-title" className={inputClass} value={title} onChange={(e) => setTitle(e.target.value)} required />
       </div>
       <div>
-        <label className={labelClass} htmlFor="tl-content">
-          Inhalt
-        </label>
-        <textarea
-          id="tl-content"
-          className={`${inputClass} min-h-[120px] resize-y font-mono text-xs`}
-          value={content}
-          onChange={(e) => setContent(e.target.value)}
-          rows={6}
-        />
+        <span className={labelClass}>Inhalt</span>
+        <div className="mt-1.5">
+          <TimelineContentEditor value={content} onChange={setContent} disabled={busy} large={largeEditor} />
+        </div>
       </div>
       <div className="flex flex-wrap gap-3 pt-2">
         <button type="submit" className={buttonPrimaryClass} disabled={busy}>

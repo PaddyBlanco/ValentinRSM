@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using ValentinRSM.Api.Contracts;
 using ValentinRSM.Api.Data;
 using ValentinRSM.Api.Entities;
+using ValentinRSM.Api.Html;
 
 namespace ValentinRSM.Api.Controllers;
 
@@ -14,6 +15,7 @@ public class TimelineEntriesController(ValentinRsmDbContext db) : ControllerBase
     public async Task<ActionResult<IReadOnlyList<TimelineEntryResponse>>> List(
         [FromQuery] Guid? companyId,
         [FromQuery] Guid? contactId,
+        [FromQuery] int? skip,
         [FromQuery] int? take,
         CancellationToken ct)
     {
@@ -24,6 +26,8 @@ public class TimelineEntriesController(ValentinRsmDbContext db) : ControllerBase
             q = q.Where(e => e.CompanyId == companyId.Value);
 
         q = q.OrderByDescending(e => e.OccurredAt);
+        if (skip is > 0)
+            q = q.Skip(skip.Value);
         if (take is > 0)
             q = q.Take(Math.Min(take.Value, 200));
 
@@ -79,7 +83,7 @@ public class TimelineEntriesController(ValentinRsmDbContext db) : ControllerBase
             Type = body.Type,
             Source = body.Source,
             Title = body.Title.Trim(),
-            Content = body.Content,
+            Content = TimelineHtmlSanitizer.Sanitize(body.Content),
             OccurredAt = body.OccurredAt,
             CreatedAt = now,
             UpdatedAt = now
@@ -102,7 +106,7 @@ public class TimelineEntriesController(ValentinRsmDbContext db) : ControllerBase
         entity.Type = body.Type;
         entity.Source = body.Source;
         entity.Title = body.Title.Trim();
-        entity.Content = body.Content;
+        entity.Content = TimelineHtmlSanitizer.Sanitize(body.Content);
         entity.OccurredAt = body.OccurredAt;
         entity.UpdatedAt = DateTimeOffset.UtcNow;
         await db.SaveChangesAsync(ct);

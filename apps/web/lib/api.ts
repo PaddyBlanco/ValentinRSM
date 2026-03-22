@@ -230,11 +230,14 @@ export async function fetchContacts(params?: {
 export async function fetchTimeline(params?: {
   companyId?: string;
   contactId?: string;
+  /** Offset für Pagination (z. B. nachgeladen beim Scrollen) */
+  skip?: number;
   take?: number;
 }): Promise<TimelineEntry[]> {
   const sp = new URLSearchParams();
   if (params?.companyId) sp.set("companyId", params.companyId);
   if (params?.contactId) sp.set("contactId", params.contactId);
+  if (params?.skip != null && params.skip > 0) sp.set("skip", String(params.skip));
   if (params?.take) sp.set("take", String(params.take));
   const q = sp.toString();
   return fetchJson<TimelineEntry[]>(`/api/timelineentries${q ? `?${q}` : ""}`);
