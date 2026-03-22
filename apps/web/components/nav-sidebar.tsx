@@ -11,7 +11,7 @@ import { SettingsTrigger } from "./settings-provider";
 import { LogoMark } from "./logo-mark";
 
 function Hairline() {
-  return <div className="h-px w-full bg-[var(--hairline)]" />;
+  return <div className="h-px w-full shrink-0 bg-[var(--hairline)]" />;
 }
 
 export function NavSidebar() {
@@ -47,13 +47,13 @@ export function NavSidebar() {
   const activeCompanies = companies.filter((c) => c.status === "active");
 
   return (
-    <aside className="hidden w-[260px] shrink-0 flex-col border-r border-[var(--hairline)] bg-[var(--bg)] md:flex">
-      <div className="border-b border-[var(--hairline)] px-4 py-5 text-[var(--fg)]">
+    <aside className="hidden h-[100dvh] max-h-[100dvh] min-h-0 w-[260px] shrink-0 flex-col overflow-hidden border-r border-[var(--hairline)] bg-[var(--bg)] md:sticky md:top-0 md:flex md:flex-col">
+      <div className="shrink-0 border-b border-[var(--hairline)] px-4 py-5 text-[var(--fg)]">
         <span className="sr-only">ValentinRSM</span>
         <LogoMark className="h-8 w-auto max-w-full" />
       </div>
 
-      <nav className="flex flex-col gap-0 px-2 py-3 text-sm" aria-label="Hauptnavigation">
+      <nav className="shrink-0 flex flex-col gap-0 px-2 py-3 text-sm" aria-label="Hauptnavigation">
         {mainNav.map((item) => {
           const active =
             pathname === item.href || (item.href !== "/" && pathname.startsWith(item.href));
@@ -74,12 +74,12 @@ export function NavSidebar() {
 
       <Hairline />
 
-      <div className="px-3 py-3">
-        <p className="mb-2 text-[10px] font-medium uppercase tracking-wide text-[var(--fg-muted)]">
+      <div className="shrink-0 px-3 py-3.5">
+        <p className="mb-2.5 text-xs font-medium uppercase tracking-wide text-[var(--fg-muted)]">
           Aktive Firmen
         </p>
-        {err && <p className="text-xs text-red-500">{err}</p>}
-        <ul className="max-h-40 space-y-1 overflow-y-auto text-xs">
+        {err && <p className="text-sm text-red-500">{err}</p>}
+        <ul className="max-h-52 space-y-1.5 overflow-y-auto text-sm">
           {activeCompanies.length === 0 && !err ? (
             <li className="text-[var(--fg-muted)]">—</li>
           ) : (
@@ -87,15 +87,15 @@ export function NavSidebar() {
               <li key={c.id}>
                 <Link
                   href={`/companies/${c.id}`}
-                  className="flex items-center gap-2 text-[var(--fg-muted)] hover:text-[var(--fg)]"
+                  className="flex items-center gap-2.5 py-0.5 text-[var(--fg-muted)] hover:text-[var(--fg)]"
                 >
                   {c.accentColor ? (
                     <span
-                      className="h-2 w-2 shrink-0 rounded-full border border-[var(--hairline)]"
+                      className="h-2.5 w-2.5 shrink-0 rounded-full border border-[var(--hairline)]"
                       style={{ backgroundColor: c.accentColor }}
                     />
                   ) : (
-                    <span className="h-2 w-2 shrink-0 rounded-full bg-[var(--fg-muted)] opacity-40" />
+                    <span className="h-2.5 w-2.5 shrink-0 rounded-full bg-[var(--fg-muted)] opacity-40" />
                   )}
                   <span className="truncate">{c.name}</span>
                 </Link>
@@ -107,11 +107,11 @@ export function NavSidebar() {
 
       <Hairline />
 
-      <div className="flex flex-1 flex-col px-3 py-3">
-        <p className="mb-2 text-[10px] font-medium uppercase tracking-wide text-[var(--fg-muted)]">
+      <div className="flex min-h-0 flex-1 flex-col px-3 py-3">
+        <p className="mb-2 shrink-0 text-[10px] font-medium uppercase tracking-wide text-[var(--fg-muted)]">
           Letzte 5 Ereignisse
         </p>
-        <ul className="max-h-48 space-y-2 overflow-y-auto text-xs">
+        <ul className="min-h-0 flex-1 space-y-2 overflow-y-auto overscroll-contain text-xs">
           {events.length === 0 && !err ? (
             <li className="text-[var(--fg-muted)]">—</li>
           ) : (
@@ -129,7 +129,7 @@ export function NavSidebar() {
         </ul>
       </div>
 
-      <div className="mt-auto border-t border-[var(--hairline)] p-3">
+      <div className="shrink-0 border-t border-[var(--hairline)] p-3">
         <SettingsTrigger variant="sidebar" />
       </div>
     </aside>

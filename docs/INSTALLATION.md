@@ -64,6 +64,8 @@ docker compose up --build
 
 Beim ersten Mal werden Images gebaut; das kann einige Minuten dauern.
 
+**Entwicklung:** Statt `up` könnt ihr `docker compose watch` nutzen — bei Änderungen unter `apps/api` und `apps/web` werden die betroffenen Images neu gebaut und die Container neu gestartet (ohne `node_modules`/`.next` bzw. `bin`/`obj` zu triggern).
+
 ### 3.4 Prüfen
 
 Nach dem Start (SQL Server braucht oft **20–60 Sekunden**, bis er Anfragen annimmt):

@@ -52,7 +52,10 @@ using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<ValentinRsmDbContext>();
     if (app.Environment.IsDevelopment())
+    {
         await db.Database.MigrateAsync();
+        await DevelopmentSeeder.SeedAsync(db);
+    }
 }
 
 await app.RunAsync();

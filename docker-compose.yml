@@ -8,6 +8,16 @@ services:
       - "1433:1433"
     volumes:
       - sqlserver_data:/var/opt/mssql
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P \"$$MSSQL_SA_PASSWORD\" -C -Q \"SELECT 1\" -b -o /dev/null || exit 1",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
 
   api:
     build:
@@ -22,7 +32,14 @@ services:
       - "8080:8080"
     depends_on:
       db:
-        condition: service_started
+        condition: service_healthy
+    develop:
+      watch:
+        - action: rebuild
+          path: ./apps/api
+          ignore:
+            - "**/bin/**"
+            - "**/obj/**"
 
   web:
     build:
@@ -36,10 +53,18 @@ services:
     ports:
       - "3000:3000"
     depends_on:
-      - api
+      api:
+        condition: service_healthy
+    develop:
+      watch:
+        - action: rebuild
+          path: ./apps/web
+          ignore:
+            - "**/node_modules/**"
+            - "**/.next/**"
 
   n8n:
-    image: n8nio/n8n:latest
+    image: n8nio/n8n:1
     ports:
       - "5678:5678"
     environment:
