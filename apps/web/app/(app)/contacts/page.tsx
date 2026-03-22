@@ -3,9 +3,9 @@
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
-import { ContactForm } from "@/components/contact-form";
-import { MailtoLink, TelLink } from "@/components/contact-links";
-import { Modal } from "@/components/modal";
+import { ContactForm } from "@/components/contacts/contact-form";
+import { MailtoLink, TelLink } from "@/components/contacts/contact-links";
+import { Modal } from "@/components/ui/modal";
 import type { Company, Contact } from "@/lib/api";
 import { createContact, fetchCompanies, fetchContacts } from "@/lib/api";
 

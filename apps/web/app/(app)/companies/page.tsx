@@ -3,8 +3,8 @@
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
-import { CompanyForm } from "@/components/company-form";
-import { Modal } from "@/components/modal";
+import { CompanyForm } from "@/components/companies/company-form";
+import { Modal } from "@/components/ui/modal";
 import type { Company } from "@/lib/api";
 import { createCompany, fetchCompanies } from "@/lib/api";
 

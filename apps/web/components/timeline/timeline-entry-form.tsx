@@ -4,7 +4,7 @@ import { useEffect, useState, type FormEvent } from "react";
 import type { CreateTimelineBody, TimelineEntry, TimelineEntryType, TimelineSource } from "@/lib/api";
 import { buttonGhostClass, buttonPrimaryClass, inputClass, labelClass } from "@/lib/form-styles";
 import { datetimeLocalToIso, isoToDatetimeLocal, nowDatetimeLocal } from "@/lib/datetime-local";
-import { TIMELINE_ENTRY_TYPES, timelineEntryTypeMeta } from "@/components/timeline-entry-type";
+import { TIMELINE_ENTRY_TYPES, timelineEntryTypeMeta } from "@/components/timeline/timeline-entry-type";
 
 const sourceOptions: { value: TimelineSource; label: string }[] = [
   { value: "manual", label: "Manuell" },
@@ -16,7 +16,10 @@ const sourceOptions: { value: TimelineSource; label: string }[] = [
   { value: "system", label: "System" },
 ];
 
+const EMPTY_CONTACT = "";
+
 export function TimelineEntryForm({
+  companyId,
   contacts,
   defaultContactId,
   initial,
@@ -25,6 +28,8 @@ export function TimelineEntryForm({
   onSubmit,
   onCancel,
 }: {
+  /** Firma, zu der der Eintrag gehört */
+  companyId: string;
   contacts: { id: string; label: string }[];
   defaultContactId?: string;
   initial?: TimelineEntry | null;
@@ -34,7 +39,7 @@ export function TimelineEntryForm({
   onSubmit: (body: CreateTimelineBody) => Promise<void>;
   onCancel?: () => void;
 }) {
-  const [contactId, setContactId] = useState(defaultContactId ?? contacts[0]?.id ?? "");
+  const [contactId, setContactId] = useState(defaultContactId ?? EMPTY_CONTACT);
   const [type, setType] = useState<TimelineEntryType>("manualNote");
   const [source, setSource] = useState<TimelineSource>("manual");
   const [title, setTitle] = useState("");
@@ -43,10 +48,9 @@ export function TimelineEntryForm({
   const [busy, setBusy] = useState(false);
   const [formErr, setFormErr] = useState<string | null>(null);
 
-  const firstContactId = contacts[0]?.id;
   useEffect(() => {
     if (!initial) {
-      setContactId(defaultContactId ?? firstContactId ?? "");
+      setContactId(defaultContactId ?? EMPTY_CONTACT);
       setType("manualNote");
       setSource("manual");
       setTitle("");
@@ -54,22 +58,18 @@ export function TimelineEntryForm({
       setOccurredLocal(nowDatetimeLocal());
       return;
     }
-    setContactId(initial.contactId);
+    setContactId(initial.contactId ?? EMPTY_CONTACT);
     setType(initial.type as TimelineEntryType);
     setSource(initial.source as TimelineSource);
     setTitle(initial.title);
     setContent(initial.content);
     setOccurredLocal(isoToDatetimeLocal(initial.occurredAt));
-  }, [initial, defaultContactId, firstContactId]);
+  }, [initial, defaultContactId]);
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     setFormErr(null);
     const t = title.trim();
-    if (!contactId) {
-      setFormErr("Bitte einen Kontakt wählen.");
-      return;
-    }
     if (!t) {
       setFormErr("Titel ist ein Pflichtfeld.");
       return;
@@ -77,7 +77,8 @@ export function TimelineEntryForm({
     setBusy(true);
     try {
       await onSubmit({
-        contactId,
+        companyId,
+        contactId: contactId ? contactId : null,
         type,
         source,
         title: t,
@@ -91,10 +92,6 @@ export function TimelineEntryForm({
     }
   }
 
-  if (contacts.length === 0) {
-    return <p className="text-sm text-[var(--fg-muted)]">Legen Sie zuerst einen Kontakt an.</p>;
-  }
-
   const isEdit = !!initial;
   const wrap = compact ? "space-y-4" : "max-w-xl space-y-4 border border-[var(--hairline)] p-4";
 
@@ -106,16 +103,16 @@ export function TimelineEntryForm({
       {formErr && <p className="text-sm text-red-500">{formErr}</p>}
       <div>
         <label className={labelClass} htmlFor="tl-contact">
-          Kontakt
+          Kontakt (optional)
         </label>
         <select
           id="tl-contact"
           className={inputClass}
           value={contactId}
           onChange={(e) => setContactId(e.target.value)}
-          required
-          disabled={isEdit || (!!defaultContactId && contacts.length <= 1)}
+          disabled={isEdit}
         >
+          <option value={EMPTY_CONTACT}>— Kein Kontakt —</option>
           {contacts.map((c) => (
             <option key={c.id} value={c.id}>
               {c.label}

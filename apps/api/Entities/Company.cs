@@ -16,4 +16,5 @@ public class Company
     public DateTimeOffset UpdatedAt { get; set; }
 
     public ICollection<Contact> Contacts { get; set; } = new List<Contact>();
+    public ICollection<TimelineEntry> TimelineEntries { get; set; } = new List<TimelineEntry>();
 }

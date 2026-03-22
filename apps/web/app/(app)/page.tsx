@@ -123,6 +123,11 @@ export default function HomePage() {
                   <Link href={`/companies/${ev.companyId}`} className="hover:text-[var(--fg)]">
                     Firma
                   </Link>
+                  {ev.contactId && ev.contactName && (
+                    <Link href={`/contacts/${ev.contactId}`} className="hover:text-[var(--fg)]">
+                      {ev.contactName}
+                    </Link>
+                  )}
                 </div>
               </li>
             ))}

@@ -95,6 +95,9 @@ public class ContactsController(ValentinRsmDbContext db) : ControllerBase
         var entity = await db.Contacts.FirstOrDefaultAsync(x => x.Id == id, ct);
         if (entity is null)
             return NotFound();
+        await db.TimelineEntries
+            .Where(t => t.ContactId == id)
+            .ExecuteUpdateAsync(setters => setters.SetProperty(t => t.ContactId, (Guid?)null), ct);
         db.Contacts.Remove(entity);
         await db.SaveChangesAsync(ct);
         return NoContent();

@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import type { TimelineEntry } from "@/lib/api";
-import { TimelineEntryTypeBadge } from "@/components/timeline-entry-type";
+import { TimelineEntryTypeBadge } from "@/components/timeline/timeline-entry-type";
 import { fetchTimeline, formatDateTime } from "@/lib/api";
 
 export default function EventsPage() {
@@ -56,13 +56,15 @@ export default function EventsPage() {
               </span>
             </div>
             <p className="mt-2 line-clamp-3 text-sm text-[var(--fg-muted)]">{ev.content}</p>
-            <div className="mt-3 flex gap-4 text-xs">
+            <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-xs">
               <Link href={`/companies/${ev.companyId}`} className="hover:underline">
                 Firma
               </Link>
-              <Link href={`/contacts/${ev.contactId}`} className="hover:underline">
-                Kontakt
-              </Link>
+              {ev.contactId && ev.contactName && (
+                <Link href={`/contacts/${ev.contactId}`} className="hover:underline">
+                  {ev.contactName}
+                </Link>
+              )}
             </div>
           </li>
         ))}

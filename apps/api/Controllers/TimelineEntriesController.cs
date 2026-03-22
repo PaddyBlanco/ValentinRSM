@@ -21,7 +21,7 @@ public class TimelineEntriesController(ValentinRsmDbContext db) : ControllerBase
         if (contactId.HasValue)
             q = q.Where(e => e.ContactId == contactId.Value);
         if (companyId.HasValue)
-            q = q.Where(e => e.Contact.CompanyId == companyId.Value);
+            q = q.Where(e => e.CompanyId == companyId.Value);
 
         q = q.OrderByDescending(e => e.OccurredAt);
         if (take is > 0)
@@ -30,8 +30,9 @@ public class TimelineEntriesController(ValentinRsmDbContext db) : ControllerBase
         var list = await q
             .Select(e => new TimelineEntryResponse(
                 e.Id,
-                e.Contact.CompanyId,
+                e.CompanyId,
                 e.ContactId,
+                e.Contact != null ? ($"{e.Contact.FirstName} {e.Contact.LastName}").Trim() : null,
                 e.Type,
                 e.Source,
                 e.Title,
@@ -49,20 +50,31 @@ public class TimelineEntriesController(ValentinRsmDbContext db) : ControllerBase
         var e = await db.TimelineEntries.AsNoTracking()
             .Include(x => x.Contact)
             .FirstOrDefaultAsync(x => x.Id == id, ct);
-        return e is null ? NotFound() : Ok(ToResponse(e, e.Contact.CompanyId));
+        return e is null ? NotFound() : Ok(ToResponse(e));
     }
 
     [HttpPost]
     public async Task<ActionResult<TimelineEntryResponse>> Create([FromBody] CreateTimelineEntryRequest body, CancellationToken ct)
     {
-        var contact = await db.Contacts.FirstOrDefaultAsync(x => x.Id == body.ContactId, ct);
-        if (contact is null)
-            return BadRequest("ContactId existiert nicht.");
+        var company = await db.Companies.AsNoTracking().FirstOrDefaultAsync(x => x.Id == body.CompanyId, ct);
+        if (company is null)
+            return BadRequest("CompanyId existiert nicht.");
+
+        Contact? contact = null;
+        if (body.ContactId.HasValue)
+        {
+            contact = await db.Contacts.FirstOrDefaultAsync(x => x.Id == body.ContactId.Value, ct);
+            if (contact is null)
+                return BadRequest("ContactId existiert nicht.");
+            if (contact.CompanyId != body.CompanyId)
+                return BadRequest("Kontakt gehört nicht zu dieser Firma.");
+        }
 
         var now = DateTimeOffset.UtcNow;
         var entity = new TimelineEntry
         {
             Id = Guid.NewGuid(),
+            CompanyId = body.CompanyId,
             ContactId = body.ContactId,
             Type = body.Type,
             Source = body.Source,
@@ -74,7 +86,9 @@ public class TimelineEntriesController(ValentinRsmDbContext db) : ControllerBase
         };
         db.TimelineEntries.Add(entity);
         await db.SaveChangesAsync(ct);
-        return CreatedAtAction(nameof(Get), new { id = entity.Id }, ToResponse(entity, contact.CompanyId));
+
+        entity.Contact = contact;
+        return CreatedAtAction(nameof(Get), new { id = entity.Id }, ToResponse(entity));
     }
 
     [HttpPut("{id:guid}")]
@@ -92,7 +106,7 @@ public class TimelineEntriesController(ValentinRsmDbContext db) : ControllerBase
         entity.OccurredAt = body.OccurredAt;
         entity.UpdatedAt = DateTimeOffset.UtcNow;
         await db.SaveChangesAsync(ct);
-        return Ok(ToResponse(entity, entity.Contact.CompanyId));
+        return Ok(ToResponse(entity));
     }
 
     [HttpDelete("{id:guid}")]
@@ -106,6 +120,17 @@ public class TimelineEntriesController(ValentinRsmDbContext db) : ControllerBase
         return NoContent();
     }
 
-    private static TimelineEntryResponse ToResponse(TimelineEntry e, Guid companyId) =>
-        new(e.Id, companyId, e.ContactId, e.Type, e.Source, e.Title, e.Content, e.OccurredAt, e.CreatedAt, e.UpdatedAt);
+    private static TimelineEntryResponse ToResponse(TimelineEntry e) =>
+        new(
+            e.Id,
+            e.CompanyId,
+            e.ContactId,
+            e.Contact != null ? ($"{e.Contact.FirstName} {e.Contact.LastName}").Trim() : null,
+            e.Type,
+            e.Source,
+            e.Title,
+            e.Content,
+            e.OccurredAt,
+            e.CreatedAt,
+            e.UpdatedAt);
 }

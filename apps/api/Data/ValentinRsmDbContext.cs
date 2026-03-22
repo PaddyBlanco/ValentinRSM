@@ -26,6 +26,10 @@ public class ValentinRsmDbContext(DbContextOptions<ValentinRsmDbContext> options
                 .WithOne(x => x.Company)
                 .HasForeignKey(x => x.CompanyId)
                 .OnDelete(DeleteBehavior.Cascade);
+            e.HasMany(x => x.TimelineEntries)
+                .WithOne(x => x.Company)
+                .HasForeignKey(x => x.CompanyId)
+                .OnDelete(DeleteBehavior.Cascade);
         });
 
         modelBuilder.Entity<Contact>(e =>
@@ -43,10 +47,12 @@ public class ValentinRsmDbContext(DbContextOptions<ValentinRsmDbContext> options
             e.HasIndex(x => new { x.CompanyId, x.CreatedAt }); // Firma + „zuletzt angelegt“ (sort=recent)
             e.HasIndex(x => x.Email).HasFilter("[Email] IS NOT NULL"); // Lookup / später Suche
             e.HasIndex(x => new { x.LastName, x.FirstName });
+            // NoAction: SQL Server erlaubt kein SET NULL hier (mehrere CASCADE-Pfade über Company).
+            // Beim Löschen eines Kontakts ContactId in TimelineEntries per Code auf null setzen.
             e.HasMany(x => x.TimelineEntries)
                 .WithOne(x => x.Contact)
                 .HasForeignKey(x => x.ContactId)
-                .OnDelete(DeleteBehavior.Cascade);
+                .OnDelete(DeleteBehavior.NoAction);
         });
 
         modelBuilder.Entity<TimelineEntry>(e =>
@@ -55,7 +61,8 @@ public class ValentinRsmDbContext(DbContextOptions<ValentinRsmDbContext> options
             e.HasKey(x => x.Id);
             e.Property(x => x.Title).HasMaxLength(500).IsRequired();
             e.Property(x => x.Content).IsRequired();
-            e.HasIndex(x => new { x.ContactId, x.OccurredAt }); // Timeline pro Kontakt chronologisch
+            e.HasIndex(x => new { x.CompanyId, x.OccurredAt });
+            e.HasIndex(x => new { x.ContactId, x.OccurredAt });
             e.HasIndex(x => x.OccurredAt); // Globale „letzte Ereignisse“
         });
     }

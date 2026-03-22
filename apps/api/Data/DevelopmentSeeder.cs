@@ -69,7 +69,7 @@ public static class DevelopmentSeeder
             });
         }
 
-        void AddTimeline(Guid id, Guid contactId, TimelineEntryType type, TimelineSource source,
+        void AddTimeline(Guid id, Guid companyId, Guid? contactId, TimelineEntryType type, TimelineSource source,
             string title, string content, int occurredDaysAgo)
         {
             var occurred = t0.AddDays(-occurredDaysAgo).AddHours(-(occurredDaysAgo % 7));
@@ -77,6 +77,7 @@ public static class DevelopmentSeeder
             timelines.Add(new TimelineEntry
             {
                 Id = id,
+                CompanyId = companyId,
                 ContactId = contactId,
                 Type = type,
                 Source = source,
@@ -105,16 +106,18 @@ public static class DevelopmentSeeder
         var acmeC2 = contacts[^2].Id;
         var acmeC3 = contacts[^1].Id;
 
-        AddTimeline(NextE(), acmeC0, TimelineEntryType.Email, TimelineSource.Email,
+        AddTimeline(NextE(), acme, acmeC0, TimelineEntryType.Email, TimelineSource.Email,
             "Re: Rahmenvertrag 2026", "Hallo Anna, angehängt der Entwurf …", 3);
-        AddTimeline(NextE(), acmeC0, TimelineEntryType.MeetingNote, TimelineSource.Manual,
+        AddTimeline(NextE(), acme, acmeC0, TimelineEntryType.MeetingNote, TimelineSource.Manual,
             "Workshop Strategie", "Teilnehmer: GF, Sales. Nächste Schritte: Pilot Q2.", 10);
-        AddTimeline(NextE(), acmeC1, TimelineEntryType.CallSummary, TimelineSource.Manual,
+        AddTimeline(NextE(), acme, acmeC1, TimelineEntryType.CallSummary, TimelineSource.Manual,
             "Telefonat Lieferantenbonus", "Kurzprotokoll: 2 % Skonto bei Vorkasse besprochen.", 7);
-        AddTimeline(NextE(), acmeC2, TimelineEntryType.ManualNote, TimelineSource.Manual,
+        AddTimeline(NextE(), acme, acmeC2, TimelineEntryType.ManualNote, TimelineSource.Manual,
             "Intern: Pricing", "Wettbewerber X unterboten uns bei SKU 12.", 18);
-        AddTimeline(NextE(), acmeC3, TimelineEntryType.ResearchNote, TimelineSource.Research,
+        AddTimeline(NextE(), acme, acmeC3, TimelineEntryType.ResearchNote, TimelineSource.Research,
             "Marktscan UK", "Drei Wettbewerber identifiziert, Quellen in Anhang.", 25);
+        AddTimeline(NextE(), acme, null, TimelineEntryType.ManualNote, TimelineSource.Manual,
+            "Intern: Quartalsreview (ohne Personenbezug)", "Gesamtüberblick Umsatz und Pipeline, noch keinem Kontakt zugeordnet.", 12);
 
         // Nordbank — 3 Kontakte
         var bank = companies[1].Id;
@@ -123,22 +126,22 @@ public static class DevelopmentSeeder
         AddContact(NextC(), bank, "Nora", "Lorenz", "nora.l@nordbank.example", "+49 89 2000", null, 20);
 
         var bankC0 = contacts[^3].Id;
-        AddTimeline(NextE(), bankC0, TimelineEntryType.Email, TimelineSource.ForwardedEmail,
+        AddTimeline(NextE(), bank, bankC0, TimelineEntryType.Email, TimelineSource.ForwardedEmail,
             "Zinsbindung Optionen", "Sehr geehrte Damen und Herren, zu Ihrer Anfrage …", 5);
-        AddTimeline(NextE(), bankC0, TimelineEntryType.MeetingNote, TimelineSource.Manual,
+        AddTimeline(NextE(), bank, bankC0, TimelineEntryType.MeetingNote, TimelineSource.Manual,
             "Termin Filiale Hamburg", "Covenant-Review, keine Abweichungen.", 12);
 
         // TechParts — 2
         var tp = companies[2].Id;
         AddContact(NextC(), tp, "Marco", "Silva", "marco@techparts.example", "+351 21 000", "Vertrieb EU", 70);
         AddContact(NextC(), tp, "Elena", "Varga", "elena@techparts.example", null, null, 30);
-        AddTimeline(NextE(), contacts[^2].Id, TimelineEntryType.Email, TimelineSource.Email,
+        AddTimeline(NextE(), tp, contacts[^2].Id, TimelineEntryType.Email, TimelineSource.Email,
             "Lieferschein #4492", "Ware versandt, Tracking: …", 2);
 
         // Müller — 1 (ruhend)
         var m = companies[3].Id;
         AddContact(NextC(), m, "Frank", "Müller", "frank@mueller-partner.example", null, "Inhaber", 200);
-        AddTimeline(NextE(), contacts[^1].Id, TimelineEntryType.ManualNote, TimelineSource.Manual,
+        AddTimeline(NextE(), m, contacts[^1].Id, TimelineEntryType.ManualNote, TimelineSource.Manual,
             "Letzter Kontakt", "Kein Bedarf bis Q3, Follow-up Winter.", 90);
 
         // Global Invest — 3
@@ -146,29 +149,29 @@ public static class DevelopmentSeeder
         AddContact(NextC(), gi, "James", "Cole", "j.cole@globalinvest.example", "+1 212 555 0100", "Partner", 80);
         AddContact(NextC(), gi, "Sofia", "Martinez", "sofia@globalinvest.example", null, "Analyst", 50);
         AddContact(NextC(), gi, "Oliver", "Neumann", "oliver@globalinvest.example", "+49 69 9000", null, 22);
-        AddTimeline(NextE(), contacts[^3].Id, TimelineEntryType.MeetingNote, TimelineSource.Manual,
+        AddTimeline(NextE(), gi, contacts[^3].Id, TimelineEntryType.MeetingNote, TimelineSource.Manual,
             "Due Diligence Call", "Finanzmodell besprochen, Datenraum geöffnet.", 8);
-        AddTimeline(NextE(), contacts[^2].Id, TimelineEntryType.ResearchNote, TimelineSource.Research,
+        AddTimeline(NextE(), gi, contacts[^2].Id, TimelineEntryType.ResearchNote, TimelineSource.Research,
             "Sector note: Logistics", "Kurzstudie 12 Seiten.", 15);
 
         // Hafenlogistik — 2
         var hl = companies[5].Id;
         AddContact(NextC(), hl, "Kai", "Petersen", "kai@hafenlogistik.example", "+49 40 7777", "Operations", 55);
         AddContact(NextC(), hl, "Ute", "Fischer", "ute@hafenlogistik.example", null, "Disposition", 33);
-        AddTimeline(NextE(), contacts[^2].Id, TimelineEntryType.CallSummary, TimelineSource.Manual,
+        AddTimeline(NextE(), hl, contacts[^2].Id, TimelineEntryType.CallSummary, TimelineSource.Manual,
             "Slot Kapazität Q2", "Zusätzliche Stellplätze möglich ab 15.4.", 6);
 
         // Steuerkanzlei — 2
         var sk = companies[6].Id;
         AddContact(NextC(), sk, "Petra", "Klein", "petra@steuer-klein.example", "+49 221 100", "Steuerberaterin", 95);
         AddContact(NextC(), sk, "Dirk", "Sommer", "dirk@steuer-klein.example", null, "Associate", 44);
-        AddTimeline(NextE(), contacts[^2].Id, TimelineEntryType.Email, TimelineSource.Email,
+        AddTimeline(NextE(), sk, contacts[^2].Id, TimelineEntryType.Email, TimelineSource.Email,
             "Umsatzsteuer-Voranmeldung", "Bitte Belege bis Freitag hochladen.", 4);
 
         // Alte Werft — 1 archiviert
         var aw = companies[7].Id;
         AddContact(NextC(), aw, "Ralf", "Groß", "ralf@altewerft.example", null, "ehem. GF", 400);
-        AddTimeline(NextE(), contacts[^1].Id, TimelineEntryType.ManualNote, TimelineSource.System,
+        AddTimeline(NextE(), aw, contacts[^1].Id, TimelineEntryType.ManualNote, TimelineSource.System,
             "Archiv-Hinweis", "Projekt beendet, keine aktiven Tickets.", 300);
 
         // CloudNine — 3
@@ -176,11 +179,11 @@ public static class DevelopmentSeeder
         AddContact(NextC(), cn, "Priya", "Shah", "priya@cloudnine.example", "+1 415 555 0199", "Product", 35);
         AddContact(NextC(), cn, "Leo", "Park", "leo@cloudnine.example", null, "Engineering", 28);
         AddContact(NextC(), cn, "Mira", "Öztürk", "mira@cloudnine.example", "+49 30 4444", "CSM", 11);
-        AddTimeline(NextE(), contacts[^3].Id, TimelineEntryType.Email, TimelineSource.BotEmail,
+        AddTimeline(NextE(), cn, contacts[^3].Id, TimelineEntryType.Email, TimelineSource.BotEmail,
             "Webhook test OK", "Automatischer Test der Sandbox-API erfolgreich.", 1);
-        AddTimeline(NextE(), contacts[^2].Id, TimelineEntryType.MeetingNote, TimelineSource.Manual,
+        AddTimeline(NextE(), cn, contacts[^2].Id, TimelineEntryType.MeetingNote, TimelineSource.Manual,
             "Integration Review", "OAuth-Scopes finalisiert.", 9);
-        AddTimeline(NextE(), contacts[^1].Id, TimelineEntryType.ManualNote, TimelineSource.Plaud,
+        AddTimeline(NextE(), cn, contacts[^1].Id, TimelineEntryType.ManualNote, TimelineSource.Plaud,
             "Slack: Release-Termin", "Go-live vorgeschlagen für KW14.", 2);
 
         // Regionalbau — 4
@@ -189,13 +192,13 @@ public static class DevelopmentSeeder
         AddContact(NextC(), rb, "Ines", "Wolf", "ines@regionalbau.example", null, "Architektin", 48);
         AddContact(NextC(), rb, "Yusuf", "Demir", "yusuf@regionalbau.example", "+49 511 999", null, 31);
         AddContact(NextC(), rb, "Petra", "Wagner", "petra.w@regionalbau.example", null, "Einkauf", 19);
-        AddTimeline(NextE(), contacts[^4].Id, TimelineEntryType.MeetingNote, TimelineSource.Manual,
+        AddTimeline(NextE(), rb, contacts[^4].Id, TimelineEntryType.MeetingNote, TimelineSource.Manual,
             "Baustellenbegehung", "Mängelliste an Subunternehmer versendet.", 5);
-        AddTimeline(NextE(), contacts[^3].Id, TimelineEntryType.Email, TimelineSource.Email,
+        AddTimeline(NextE(), rb, contacts[^3].Id, TimelineEntryType.Email, TimelineSource.Email,
             "Termin Rohbau", "Montag 08:00 Uhr Treffpunkt Tor 2.", 12);
-        AddTimeline(NextE(), contacts[^2].Id, TimelineEntryType.CallSummary, TimelineSource.Manual,
+        AddTimeline(NextE(), rb, contacts[^2].Id, TimelineEntryType.CallSummary, TimelineSource.Manual,
             "Abstimmung Statik", "Freigabe für Deckenplatten erteilt.", 20);
-        AddTimeline(NextE(), contacts[^1].Id, TimelineEntryType.ResearchNote, TimelineSource.Research,
+        AddTimeline(NextE(), rb, contacts[^1].Id, TimelineEntryType.ResearchNote, TimelineSource.Research,
             "Zulassung Behörde", "Antragsnummer und Fristen dokumentiert.", 27);
 
         db.Contacts.AddRange(contacts);

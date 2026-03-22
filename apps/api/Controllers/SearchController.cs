@@ -60,7 +60,8 @@ public class SearchController(ValentinRsmDbContext db) : ControllerBase
             .ToListAsync(ct);
 
         var timelineRows = await db.TimelineEntries.AsNoTracking()
-            .Include(e => e.Contact).ThenInclude(c => c.Company)
+            .Include(e => e.Contact)
+            .Include(e => e.Company)
             .Where(e => e.Title.Contains(raw) || e.Content.Contains(raw))
             .OrderByDescending(e => e.OccurredAt)
             .Take(limit)
@@ -68,14 +69,15 @@ public class SearchController(ValentinRsmDbContext db) : ControllerBase
 
         var timeline = timelineRows.Select(e =>
         {
-            var co = e.Contact;
-            var name = $"{co.FirstName} {co.LastName}".Trim();
+            string? contactName = null;
+            if (e.Contact != null)
+                contactName = $"{e.Contact.FirstName} {e.Contact.LastName}".Trim();
             return new SearchTimelineHit(
                 e.Id,
-                co.CompanyId,
-                co.Company.Name,
-                co.Id,
-                name,
+                e.CompanyId,
+                e.Company.Name,
+                e.ContactId,
+                contactName,
                 e.Title,
                 Preview(e.Content),
                 e.OccurredAt,

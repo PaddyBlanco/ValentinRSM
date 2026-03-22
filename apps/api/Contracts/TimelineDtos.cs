@@ -5,7 +5,8 @@ namespace ValentinRSM.Api.Contracts;
 public record TimelineEntryResponse(
     Guid Id,
     Guid CompanyId,
-    Guid ContactId,
+    Guid? ContactId,
+    string? ContactName,
     TimelineEntryType Type,
     TimelineSource Source,
     string Title,
@@ -15,7 +16,8 @@ public record TimelineEntryResponse(
     DateTimeOffset UpdatedAt);
 
 public record CreateTimelineEntryRequest(
-    Guid ContactId,
+    Guid CompanyId,
+    Guid? ContactId,
     TimelineEntryType Type,
     TimelineSource Source,
     string Title,

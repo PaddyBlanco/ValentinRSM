@@ -3,9 +3,9 @@
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
-import { MailtoLink } from "@/components/contact-links";
+import { MailtoLink } from "@/components/contacts/contact-links";
 import type { SearchResponse } from "@/lib/api";
-import { TimelineEntryTypeBadge } from "@/components/timeline-entry-type";
+import { TimelineEntryTypeBadge } from "@/components/timeline/timeline-entry-type";
 import { fetchSearch, formatDateTime } from "@/lib/api";
 
 const statusLabel: Record<string, string> = {
@@ -182,9 +182,11 @@ function SearchContent() {
                       <Link href={`/companies/${ev.companyId}`} className="hover:underline">
                         Firma
                       </Link>
-                      <Link href={`/contacts/${ev.contactId}`} className="hover:underline">
-                        {ev.contactName}
-                      </Link>
+                      {ev.contactId && ev.contactName && (
+                        <Link href={`/contacts/${ev.contactId}`} className="hover:underline">
+                          {ev.contactName}
+                        </Link>
+                      )}
                     </div>
                   </li>
                 ))}

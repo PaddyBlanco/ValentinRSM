@@ -5,7 +5,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { mainNav } from "@/lib/nav";
-import { useSettings } from "./settings-provider";
+import { useSettings } from "../settings/settings-provider";
 
 /** Feste Leiste unten: Start, Firmen, Kontakte, Ereignisse, Einstellungen (nur unter md). */
 export function MobileBottomNav() {

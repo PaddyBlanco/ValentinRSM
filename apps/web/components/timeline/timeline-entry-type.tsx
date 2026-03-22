@@ -38,12 +38,13 @@ export function timelineEntryTypeLabel(type: string): string {
   return m?.label ?? type;
 }
 
-/** Nur Icon (z. B. Sidebar), mit Tooltip/aria-label. */
+/** Nur Icon (z. B. Sidebar, Feed), mit Tooltip/aria-label. */
 export function TimelineEntryTypeIcon({
   type,
   className,
 }: {
   type: string;
+  /** z. B. `h-6 w-6` für Feed neben dem Titel */
   className?: string;
 }) {
   const m = timelineEntryTypeMeta[type as TimelineEntryType] ?? fallback;

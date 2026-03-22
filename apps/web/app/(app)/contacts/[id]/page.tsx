@@ -3,11 +3,11 @@
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { ContactForm } from "@/components/contact-form";
-import { MailtoLink, TelLink } from "@/components/contact-links";
-import { Modal } from "@/components/modal";
-import { TimelineEntryForm } from "@/components/timeline-entry-form";
-import { TimelineEntryTypeBadge } from "@/components/timeline-entry-type";
+import { ContactForm } from "@/components/contacts/contact-form";
+import { MailtoLink, TelLink } from "@/components/contacts/contact-links";
+import { Modal } from "@/components/ui/modal";
+import { TimelineEntryForm } from "@/components/timeline/timeline-entry-form";
+import { TimelineEntryTypeBadge } from "@/components/timeline/timeline-entry-type";
 import { buttonDangerClass, buttonGhostClass } from "@/lib/form-styles";
 import type { Company, Contact, CreateContactBody, TimelineEntry } from "@/lib/api";
 import {
@@ -16,11 +16,13 @@ import {
   deleteTimelineEntry,
   fetchCompany,
   fetchContact,
+  fetchContacts,
   fetchTimeline,
   formatDateTime,
   updateContact,
   updateTimelineEntry,
 } from "@/lib/api";
+import { timelineContentNeedsExpand } from "@/lib/timeline-entry-content";
 
 export default function ContactDetailPage() {
   const params = useParams();
@@ -28,6 +30,7 @@ export default function ContactDetailPage() {
   const id = params.id as string;
   const [contact, setContact] = useState<Contact | null>(null);
   const [company, setCompany] = useState<Company | null>(null);
+  const [companyContacts, setCompanyContacts] = useState<Contact[]>([]);
   const [timeline, setTimeline] = useState<TimelineEntry[]>([]);
   const [err, setErr] = useState<string | null>(null);
   const [editContactOpen, setEditContactOpen] = useState(false);
@@ -35,16 +38,19 @@ export default function ContactDetailPage() {
   const [timelineNewFormKey, setTimelineNewFormKey] = useState(0);
   const [editingTimeline, setEditingTimeline] = useState<TimelineEntry | null>(null);
   const [timelineEditFormKey, setTimelineEditFormKey] = useState(0);
+  const [timelineExpanded, setTimelineExpanded] = useState<Record<string, boolean>>({});
 
   async function reload() {
     const k = await fetchContact(id);
     setContact(k);
-    const [co, tl] = await Promise.all([
+    const [co, tl, ct] = await Promise.all([
       fetchCompany(k.companyId),
       fetchTimeline({ contactId: id, take: 50 }),
+      fetchContacts({ companyId: k.companyId }),
     ]);
     setCompany(co);
     setTimeline(tl);
+    setCompanyContacts(ct);
   }
 
   useEffect(() => {
@@ -55,13 +61,15 @@ export default function ContactDetailPage() {
         const k = await fetchContact(id);
         if (c) return;
         setContact(k);
-        const [co, tl] = await Promise.all([
+        const [co, tl, ct] = await Promise.all([
           fetchCompany(k.companyId),
           fetchTimeline({ contactId: id, take: 50 }),
+          fetchContacts({ companyId: k.companyId }),
         ]);
         if (!c) {
           setCompany(co);
           setTimeline(tl);
+          setCompanyContacts(ct);
           setErr(null);
         }
       } catch (e: unknown) {
@@ -115,10 +123,10 @@ export default function ContactDetailPage() {
     );
   }
 
-  const selfContactOption = {
-    id: contact.id,
-    label: `${contact.firstName} ${contact.lastName}`,
-  };
+  const contactOptions = companyContacts.map((k) => ({
+    id: k.id,
+    label: `${k.firstName} ${k.lastName}`,
+  }));
 
   return (
     <main className="p-6 md:p-10">
@@ -187,7 +195,8 @@ export default function ContactDetailPage() {
           <TimelineEntryForm
             key={timelineNewFormKey}
             compact
-            contacts={[selfContactOption]}
+            companyId={contact.companyId}
+            contacts={contactOptions}
             defaultContactId={contact.id}
             submitLabel="Eintrag speichern"
             onSubmit={async (body) => {
@@ -220,7 +229,8 @@ export default function ContactDetailPage() {
             <TimelineEntryForm
               key={`${editingTimeline.id}-${timelineEditFormKey}`}
               compact
-              contacts={[selfContactOption]}
+              companyId={contact.companyId}
+              contacts={contactOptions}
               initial={editingTimeline}
               submitLabel="Änderungen speichern"
               onSubmit={async (body) => {
@@ -240,33 +250,62 @@ export default function ContactDetailPage() {
         </Modal>
 
         <ul className="space-y-4 text-sm">
-          {timeline.map((ev) => (
-            <li key={ev.id} className="border-b border-[var(--hairline)] pb-4 last:border-0">
-              <div className="flex flex-wrap items-start justify-between gap-2">
-                <div className="font-medium">{ev.title}</div>
-                <button
-                  type="button"
-                  className="text-xs text-[var(--fg-muted)] hover:text-[var(--fg)] hover:underline"
-                  onClick={() => {
-                    setTimelineEditFormKey((k) => k + 1);
-                    setEditingTimeline(ev);
-                  }}
-                >
-                  Bearbeiten
-                </button>
-              </div>
-              <div className="mt-1 text-xs text-[var(--fg-muted)]">
-                <span className="inline-flex flex-wrap items-center gap-x-1.5 gap-y-0.5">
-                  <span>{formatDateTime(ev.occurredAt)}</span>
-                  <span aria-hidden>·</span>
-                  <TimelineEntryTypeBadge type={ev.type} />
-                  <span aria-hidden>·</span>
-                  <span>{ev.source}</span>
-                </span>
-              </div>
-              <p className="mt-2 whitespace-pre-wrap text-[var(--fg-muted)]">{ev.content}</p>
-            </li>
-          ))}
+          {timeline.map((ev) => {
+            const contentLong = ev.content ? timelineContentNeedsExpand(ev.content) : false;
+            const contentExpanded = !!timelineExpanded[ev.id];
+            return (
+              <li key={ev.id} className="border-b border-[var(--hairline)] pb-4 last:border-0">
+                <div className="flex flex-wrap items-start justify-between gap-2">
+                  <div className="font-medium">{ev.title}</div>
+                  <button
+                    type="button"
+                    className="text-xs text-[var(--fg-muted)] hover:text-[var(--fg)] hover:underline"
+                    onClick={() => {
+                      setTimelineEditFormKey((k) => k + 1);
+                      setEditingTimeline(ev);
+                    }}
+                  >
+                    Bearbeiten
+                  </button>
+                </div>
+                <div className="mt-1 text-xs text-[var(--fg-muted)]">
+                  <span className="inline-flex flex-wrap items-center gap-x-1.5 gap-y-0.5">
+                    <span>{formatDateTime(ev.occurredAt)}</span>
+                    <span aria-hidden>·</span>
+                    <TimelineEntryTypeBadge type={ev.type} />
+                    <span aria-hidden>·</span>
+                    <span>{ev.source}</span>
+                  </span>
+                </div>
+                {ev.content && (
+                  <div className="mt-2">
+                    <p
+                      className={`whitespace-pre-wrap text-[var(--fg-muted)] ${
+                        contentLong && !contentExpanded ? "line-clamp-6" : ""
+                      }`}
+                    >
+                      {ev.content}
+                    </p>
+                    {contentLong && (
+                      <button
+                        type="button"
+                        className="mt-2 text-xs font-medium text-[var(--fg-muted)] hover:text-[var(--fg)] hover:underline"
+                        aria-expanded={contentExpanded}
+                        onClick={() =>
+                          setTimelineExpanded((prev) => ({
+                            ...prev,
+                            [ev.id]: !prev[ev.id],
+                          }))
+                        }
+                      >
+                        {contentExpanded ? "Weniger" : "Mehr anzeigen"}
+                      </button>
+                    )}
+                  </div>
+                )}
+              </li>
+            );
+          })}
           {timeline.length === 0 && <li className="text-[var(--fg-muted)]">Keine Einträge.</li>}
         </ul>
       </section>

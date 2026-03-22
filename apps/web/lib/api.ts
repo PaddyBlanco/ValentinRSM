@@ -29,7 +29,9 @@ export type Contact = {
 export type TimelineEntry = {
   id: string;
   companyId: string;
-  contactId: string;
+  contactId: string | null;
+  /** gesetzt, wenn ein Kontakt verknüpft ist */
+  contactName: string | null;
   type: string;
   source: string;
   title: string;
@@ -170,7 +172,9 @@ export type TimelineSource =
   | "system";
 
 export type CreateTimelineBody = {
-  contactId: string;
+  companyId: string;
+  /** optional; fehlt oder leer = nur Firmenbezug */
+  contactId?: string | null;
   type: TimelineEntryType;
   source: TimelineSource;
   title: string;
@@ -182,7 +186,13 @@ export async function createTimelineEntry(body: CreateTimelineBody): Promise<Tim
   return postJson<TimelineEntry>("/api/timelineentries", body);
 }
 
-export type UpdateTimelineBody = Omit<CreateTimelineBody, "contactId">;
+export type UpdateTimelineBody = {
+  type: TimelineEntryType;
+  source: TimelineSource;
+  title: string;
+  content: string;
+  occurredAt: string;
+};
 
 export async function updateTimelineEntry(id: string, body: UpdateTimelineBody): Promise<TimelineEntry> {
   return putJson<TimelineEntry>(`/api/timelineentries/${encodeURIComponent(id)}`, body);
@@ -251,8 +261,8 @@ export type SearchTimelineHit = {
   id: string;
   companyId: string;
   companyName: string;
-  contactId: string;
-  contactName: string;
+  contactId: string | null;
+  contactName: string | null;
   title: string;
   contentPreview: string;
   occurredAt: string;

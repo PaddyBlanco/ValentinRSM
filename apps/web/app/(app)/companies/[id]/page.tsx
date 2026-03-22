@@ -3,12 +3,12 @@
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { CompanyForm } from "@/components/company-form";
-import { ContactForm } from "@/components/contact-form";
-import { MailtoLink } from "@/components/contact-links";
-import { Modal } from "@/components/modal";
-import { TimelineEntryForm } from "@/components/timeline-entry-form";
-import { TimelineEntryTypeBadge } from "@/components/timeline-entry-type";
+import { CompanyForm } from "@/components/companies/company-form";
+import { ContactForm } from "@/components/contacts/contact-form";
+import { MailtoLink } from "@/components/contacts/contact-links";
+import { Modal } from "@/components/ui/modal";
+import { TimelineEntryForm } from "@/components/timeline/timeline-entry-form";
+import { TimelineEntryTypeIcon } from "@/components/timeline/timeline-entry-type";
 import { buttonDangerClass, buttonGhostClass } from "@/lib/form-styles";
 import type { Company, Contact, CreateCompanyBody, TimelineEntry } from "@/lib/api";
 import {
@@ -23,6 +23,8 @@ import {
   updateCompany,
   updateTimelineEntry,
 } from "@/lib/api";
+import { timelineContentNeedsExpand } from "@/lib/timeline-entry-content";
+import { useBumpNavRefresh } from "@/components/layout/nav-refresh-context";
 
 const statusLabel: Record<string, string> = {
   active: "Aktiv",
@@ -34,6 +36,7 @@ const statusLabel: Record<string, string> = {
 export default function CompanyDetailPage() {
   const params = useParams();
   const router = useRouter();
+  const bumpNavRefresh = useBumpNavRefresh();
   const id = params.id as string;
   const [company, setCompany] = useState<Company | null>(null);
   const [contacts, setContacts] = useState<Contact[]>([]);
@@ -46,6 +49,8 @@ export default function CompanyDetailPage() {
   const [timelineNewFormKey, setTimelineNewFormKey] = useState(0);
   const [editingTimeline, setEditingTimeline] = useState<TimelineEntry | null>(null);
   const [timelineEditFormKey, setTimelineEditFormKey] = useState(0);
+  const [timelineExpanded, setTimelineExpanded] = useState<Record<string, boolean>>({});
+  const [companyTab, setCompanyTab] = useState<"timeline" | "contacts">("timeline");
 
   async function reload() {
     const [co, ct, tl] = await Promise.all([
@@ -88,6 +93,7 @@ export default function CompanyDetailPage() {
     const updated = await updateCompany(company.id, body);
     setCompany(updated);
     setEditCompanyOpen(false);
+    bumpNavRefresh();
   }
 
   async function onDeleteCompany() {
@@ -97,6 +103,7 @@ export default function CompanyDetailPage() {
     }
     await deleteCompany(company.id);
     setEditCompanyOpen(false);
+    bumpNavRefresh();
     router.push("/companies");
   }
 
@@ -127,16 +134,19 @@ export default function CompanyDetailPage() {
 
   return (
     <main className="p-6 md:p-10">
-      <header className="mb-8 border-b border-[var(--hairline)] pb-6">
+      <div className="mx-auto w-[80%] max-w-full">
+      <header className="border-b border-[var(--hairline)] pb-6">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="flex flex-wrap items-start gap-3">
-            {company.accentColor && (
+            {company.accentColor ? (
               <span
                 className="mt-1 h-8 w-8 shrink-0 rounded border border-[var(--hairline)]"
                 style={{ backgroundColor: company.accentColor }}
               />
+            ) : (
+              <span className="mt-1 h-8 w-8 shrink-0 rounded border border-[var(--hairline)] bg-[var(--fg-muted)] opacity-25" />
             )}
-            <div>
+            <div className="min-w-0">
               <h1 className="text-xl font-medium">{company.name}</h1>
               <p className="mt-1 text-sm text-[var(--fg-muted)]">
                 {company.type} · {statusLabel[company.status] ?? company.status}
@@ -148,9 +158,47 @@ export default function CompanyDetailPage() {
           </button>
         </div>
         {company.notes && (
-          <p className="mt-4 max-w-2xl text-sm leading-relaxed text-[var(--fg-muted)]">{company.notes}</p>
+          <p className="mt-4 text-sm leading-relaxed text-[var(--fg-muted)]">{company.notes}</p>
         )}
       </header>
+
+      <div
+        role="tablist"
+        aria-label="Firma Abschnitte"
+        className="mt-6 flex gap-8 border-b border-[var(--hairline)]"
+      >
+        <button
+          type="button"
+          role="tab"
+          aria-selected={companyTab === "timeline"}
+          id="tab-timeline"
+          className={`-mb-px border-b-2 pb-2.5 text-sm font-medium transition ${
+            companyTab === "timeline"
+              ? "border-[var(--fg)] text-[var(--fg)]"
+              : "border-transparent text-[var(--fg-muted)] hover:text-[var(--fg)]"
+          }`}
+          onClick={() => setCompanyTab("timeline")}
+        >
+          Timeline
+        </button>
+        <button
+          type="button"
+          role="tab"
+          aria-selected={companyTab === "contacts"}
+          id="tab-contacts"
+          className={`-mb-px border-b-2 pb-2.5 text-sm font-medium transition ${
+            companyTab === "contacts"
+              ? "border-[var(--fg)] text-[var(--fg)]"
+              : "border-transparent text-[var(--fg-muted)] hover:text-[var(--fg)]"
+          }`}
+          onClick={() => setCompanyTab("contacts")}
+        >
+          Kontakte
+          {contacts.length > 0 && (
+            <span className="ml-1.5 tabular-nums text-[var(--fg-muted)]">({contacts.length})</span>
+          )}
+        </button>
+      </div>
 
       <Modal
         open={editCompanyOpen}
@@ -172,35 +220,6 @@ export default function CompanyDetailPage() {
         />
       </Modal>
 
-      <section className="mb-10">
-        <div className="mb-3 flex flex-wrap items-center justify-between gap-2 border-b border-[var(--hairline)] pb-2">
-          <h2 className="text-sm font-medium">Kontakte</h2>
-          <button
-            type="button"
-            className="text-xs text-[var(--fg-muted)] hover:text-[var(--fg)] hover:underline"
-            onClick={() => {
-              setNewContactFormKey((k) => k + 1);
-              setNewContactOpen(true);
-            }}
-          >
-            + Neuer Kontakt
-          </button>
-        </div>
-        <ul className="space-y-2 text-sm">
-          {contacts.map((k) => (
-            <li key={k.id} className="flex border-b border-[var(--hairline)] py-2 last:border-0">
-              <Link href={`/contacts/${k.id}`} className="hover:underline">
-                {k.firstName} {k.lastName}
-              </Link>
-              {k.email && (
-                <MailtoLink email={k.email} className="ml-3 text-[var(--fg-muted)] hover:text-[var(--fg)]" />
-              )}
-            </li>
-          ))}
-          {contacts.length === 0 && <li className="text-[var(--fg-muted)]">Keine Kontakte.</li>}
-        </ul>
-      </section>
-
       <Modal open={newContactOpen} onClose={() => setNewContactOpen(false)} title="Neuer Kontakt" wide>
         <ContactForm
           key={newContactFormKey}
@@ -219,12 +238,13 @@ export default function CompanyDetailPage() {
         />
       </Modal>
 
-      <section>
-        <div className="mb-3 flex flex-wrap items-center justify-between gap-2 border-b border-[var(--hairline)] pb-2">
-          <h2 className="text-sm font-medium">Timeline</h2>
+      {companyTab === "timeline" && (
+      <section className="mt-6" role="tabpanel" aria-labelledby="tab-timeline">
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+          <h2 className="sr-only">Timeline</h2>
           <button
             type="button"
-            className="text-xs text-[var(--fg-muted)] hover:text-[var(--fg)] hover:underline"
+            className="rounded-full border border-[var(--hairline)] bg-[var(--hover)] px-3 py-1.5 text-xs font-medium text-[var(--fg)] hover:bg-[var(--hairline)]"
             onClick={() => {
               setTimelineNewFormKey((k) => k + 1);
               setTimelineNewOpen(true);
@@ -235,22 +255,19 @@ export default function CompanyDetailPage() {
         </div>
 
         <Modal open={timelineNewOpen} onClose={() => setTimelineNewOpen(false)} title="Neuer Timeline-Eintrag" wide>
-          {contactOptions.length === 0 ? (
-            <p className="text-sm text-[var(--fg-muted)]">Legen Sie zuerst einen Kontakt an.</p>
-          ) : (
-            <TimelineEntryForm
-              key={timelineNewFormKey}
-              compact
-              contacts={contactOptions}
-              submitLabel="Eintrag speichern"
-              onSubmit={async (body) => {
-                await createTimelineEntry(body);
-                setTimelineNewOpen(false);
-                await reload();
-              }}
-              onCancel={() => setTimelineNewOpen(false)}
-            />
-          )}
+          <TimelineEntryForm
+            key={timelineNewFormKey}
+            compact
+            companyId={company.id}
+            contacts={contactOptions}
+            submitLabel="Eintrag speichern"
+            onSubmit={async (body) => {
+              await createTimelineEntry(body);
+              setTimelineNewOpen(false);
+              await reload();
+            }}
+            onCancel={() => setTimelineNewOpen(false)}
+          />
         </Modal>
 
         <Modal
@@ -270,10 +287,11 @@ export default function CompanyDetailPage() {
             ) : null
           }
         >
-          {editingTimeline && contactOptions.length > 0 && (
+          {editingTimeline && (
             <TimelineEntryForm
               key={`${editingTimeline.id}-${timelineEditFormKey}`}
               compact
+              companyId={company.id}
               contacts={contactOptions}
               initial={editingTimeline}
               submitLabel="Änderungen speichern"
@@ -293,37 +311,128 @@ export default function CompanyDetailPage() {
           )}
         </Modal>
 
-        <ul className="space-y-4 text-sm">
-          {timeline.map((ev) => (
-            <li key={ev.id} className="border-b border-[var(--hairline)] pb-4 last:border-0">
-              <div className="flex flex-wrap items-start justify-between gap-2">
-                <div className="font-medium">{ev.title}</div>
-                <button
-                  type="button"
-                  className="text-xs text-[var(--fg-muted)] hover:text-[var(--fg)] hover:underline"
-                  onClick={() => {
-                    setTimelineEditFormKey((k) => k + 1);
-                    setEditingTimeline(ev);
-                  }}
-                >
-                  Bearbeiten
-                </button>
-              </div>
-              <div className="mt-1 text-xs text-[var(--fg-muted)]">
-                <span className="inline-flex flex-wrap items-center gap-x-1.5 gap-y-0.5">
-                  <span>{formatDateTime(ev.occurredAt)}</span>
-                  <span aria-hidden>·</span>
-                  <TimelineEntryTypeBadge type={ev.type} />
-                  <span aria-hidden>·</span>
-                  <span>{ev.source}</span>
-                </span>
-              </div>
-              <p className="mt-2 whitespace-pre-wrap text-[var(--fg-muted)]">{ev.content}</p>
+        <ul className="w-full space-y-4">
+          {timeline.map((ev) => {
+            const contentLong = ev.content ? timelineContentNeedsExpand(ev.content) : false;
+            const contentExpanded = !!timelineExpanded[ev.id];
+            return (
+              <li key={ev.id}>
+                <article className="overflow-hidden rounded-2xl border border-[var(--hairline)] bg-[var(--bg-elevated)] shadow-sm">
+                  <div className="flex gap-3 p-4 sm:gap-4 sm:p-5">
+                    <div className="shrink-0 pt-0.5">
+                      <span className="flex h-11 w-11 items-center justify-center rounded-full bg-[var(--hover)] text-[var(--fg-muted)]">
+                        <TimelineEntryTypeIcon type={ev.type} className="h-6 w-6" />
+                      </span>
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex flex-wrap items-start justify-between gap-2 gap-y-1">
+                        <h3 className="text-base font-semibold leading-snug text-[var(--fg)]">{ev.title}</h3>
+                        <button
+                          type="button"
+                          className="shrink-0 text-xs text-[var(--fg-muted)] hover:text-[var(--fg)] hover:underline"
+                          onClick={() => {
+                            setTimelineEditFormKey((k) => k + 1);
+                            setEditingTimeline(ev);
+                          }}
+                        >
+                          Bearbeiten
+                        </button>
+                      </div>
+                      <p className="mt-1 text-xs text-[var(--fg-muted)]">
+                        {formatDateTime(ev.occurredAt)}
+                        <span aria-hidden className="mx-1.5">
+                          ·
+                        </span>
+                        {ev.source}
+                        {ev.contactId && ev.contactName && (
+                          <>
+                            <span aria-hidden className="mx-1.5">
+                              ·
+                            </span>
+                            <Link href={`/contacts/${ev.contactId}`} className="hover:text-[var(--fg)] hover:underline">
+                              {ev.contactName}
+                            </Link>
+                          </>
+                        )}
+                      </p>
+                      {ev.content && (
+                        <div className="mt-3">
+                          <p
+                            className={`whitespace-pre-wrap text-sm leading-relaxed text-[var(--fg)] ${
+                              contentLong && !contentExpanded ? "line-clamp-6" : ""
+                            }`}
+                          >
+                            {ev.content}
+                          </p>
+                          {contentLong && (
+                            <button
+                              type="button"
+                              className="mt-2 text-xs font-medium text-[var(--fg-muted)] hover:text-[var(--fg)] hover:underline"
+                              aria-expanded={contentExpanded}
+                              onClick={() =>
+                                setTimelineExpanded((prev) => ({
+                                  ...prev,
+                                  [ev.id]: !prev[ev.id],
+                                }))
+                              }
+                            >
+                              {contentExpanded ? "Weniger" : "Mehr anzeigen"}
+                            </button>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </article>
+              </li>
+            );
+          })}
+          {timeline.length === 0 && (
+            <li className="rounded-2xl border border-dashed border-[var(--hairline)] py-12 text-center text-sm text-[var(--fg-muted)]">
+              Noch keine Einträge.
             </li>
-          ))}
-          {timeline.length === 0 && <li className="text-[var(--fg-muted)]">Keine Einträge.</li>}
+          )}
         </ul>
       </section>
+      )}
+
+      {companyTab === "contacts" && (
+        <section className="mt-6" role="tabpanel" aria-labelledby="tab-contacts">
+          <div className="flex min-h-0 flex-col overflow-hidden rounded-lg border border-[var(--hairline)] bg-[var(--bg-elevated)]">
+            <div className="flex shrink-0 items-center justify-between gap-2 border-b border-[var(--hairline)] px-3 py-2.5">
+              <h2 className="text-sm font-medium">Kontakte</h2>
+              <button
+                type="button"
+                className="text-xs text-[var(--fg-muted)] hover:text-[var(--fg)] hover:underline"
+                onClick={() => {
+                  setNewContactFormKey((k) => k + 1);
+                  setNewContactOpen(true);
+                }}
+              >
+                + Neuer Kontakt
+              </button>
+            </div>
+            <ul className="max-h-[min(520px,65vh)] overflow-y-auto overscroll-contain text-sm">
+              {contacts.map((k) => (
+                <li key={k.id} className="border-b border-[var(--hairline)] last:border-0">
+                  <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1 px-3 py-2.5">
+                    <Link href={`/contacts/${k.id}`} className="font-medium hover:underline">
+                      {k.firstName} {k.lastName}
+                    </Link>
+                    {k.email && (
+                      <MailtoLink email={k.email} className="text-xs text-[var(--fg-muted)] hover:text-[var(--fg)]" />
+                    )}
+                  </div>
+                </li>
+              ))}
+              {contacts.length === 0 && (
+                <li className="px-3 py-10 text-center text-[var(--fg-muted)]">Keine Kontakte.</li>
+              )}
+            </ul>
+          </div>
+        </section>
+      )}
+      </div>
     </main>
   );
 }

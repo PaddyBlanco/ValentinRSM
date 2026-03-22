@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { LogoMark } from "./logo-mark";
+import { LogoMark } from "../branding/logo-mark";
 
 /** Kompakte Kopfzeile nur unter md: Logo (Einstellungen: unten links über der Tab-Leiste). */
 export function MobileHeader() {

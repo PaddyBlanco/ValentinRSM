@@ -3,13 +3,17 @@ using ValentinRSM.Api.Enums;
 namespace ValentinRSM.Api.Entities;
 
 /// <summary>
-/// Chronologisches Ereignis; gehört immer einem Kontakt (Firma über <see cref="Contact.CompanyId"/>).
+/// Chronologisches Ereignis; gehört immer einer <see cref="Company"/>.
+/// Optional einem <see cref="Contact"/> derselben Firma zugeordnet.
 /// </summary>
 public class TimelineEntry
 {
     public Guid Id { get; set; }
-    public Guid ContactId { get; set; }
-    public Contact Contact { get; set; } = null!;
+    public Guid CompanyId { get; set; }
+    public Company Company { get; set; } = null!;
+
+    public Guid? ContactId { get; set; }
+    public Contact? Contact { get; set; }
 
     public TimelineEntryType Type { get; set; }
     public TimelineSource Source { get; set; }
