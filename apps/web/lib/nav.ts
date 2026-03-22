@@ -4,6 +4,7 @@ import {
   faBuilding,
   faCalendarDays,
   faHouse,
+  faMagnifyingGlass,
 } from "@fortawesome/free-solid-svg-icons";
 
 export const mainNav: {
@@ -15,6 +16,7 @@ export const mainNav: {
   { href: "/", label: "Start", mobileLabel: "Start", icon: faHouse },
   { href: "/companies", label: "Firmen", mobileLabel: "Firmen", icon: faBuilding },
   { href: "/contacts", label: "Kontakte", mobileLabel: "Kontakte", icon: faAddressBook },
+  { href: "/search", label: "Suche", mobileLabel: "Suche", icon: faMagnifyingGlass },
   {
     href: "/events",
     label: "Letzte Ereignisse",

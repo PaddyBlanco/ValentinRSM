@@ -53,9 +53,12 @@ export function getApiBaseUrl(): string {
   );
 }
 
+function apiUrl(path: string): string {
+  return `${getApiBaseUrl().replace(/\/$/, "")}${path.startsWith("/") ? path : `/${path}`}`;
+}
+
 export async function fetchJson<T>(path: string, init?: RequestInit): Promise<T> {
-  const url = `${getApiBaseUrl().replace(/\/$/, "")}${path.startsWith("/") ? path : `/${path}`}`;
-  const res = await fetch(url, {
+  const res = await fetch(apiUrl(path), {
     ...init,
     headers: { Accept: "application/json", ...init?.headers },
     next: init?.next ?? { revalidate: 0 },
@@ -65,6 +68,128 @@ export async function fetchJson<T>(path: string, init?: RequestInit): Promise<T>
     throw new Error(`${res.status} ${res.statusText}: ${text}`);
   }
   return res.json() as Promise<T>;
+}
+
+export async function postJson<T>(path: string, body: unknown): Promise<T> {
+  const res = await fetch(apiUrl(path), {
+    method: "POST",
+    headers: { Accept: "application/json", "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`${res.status} ${res.statusText}: ${text}`);
+  }
+  return res.json() as Promise<T>;
+}
+
+export async function putJson<T>(path: string, body: unknown): Promise<T> {
+  const res = await fetch(apiUrl(path), {
+    method: "PUT",
+    headers: { Accept: "application/json", "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`${res.status} ${res.statusText}: ${text}`);
+  }
+  return res.json() as Promise<T>;
+}
+
+export async function deleteResource(path: string): Promise<void> {
+  const res = await fetch(apiUrl(path), {
+    method: "DELETE",
+    headers: { Accept: "application/json" },
+  });
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`${res.status} ${res.statusText}: ${text}`);
+  }
+}
+
+export type CreateCompanyBody = {
+  name: string;
+  type: string;
+  status: CompanyStatus;
+  accentColor: string | null;
+  notes: string | null;
+};
+
+export async function createCompany(body: CreateCompanyBody): Promise<Company> {
+  return postJson<Company>("/api/companies", body);
+}
+
+export async function updateCompany(id: string, body: CreateCompanyBody): Promise<Company> {
+  return putJson<Company>(`/api/companies/${encodeURIComponent(id)}`, body);
+}
+
+export async function deleteCompany(id: string): Promise<void> {
+  return deleteResource(`/api/companies/${encodeURIComponent(id)}`);
+}
+
+export type CreateContactBody = {
+  companyId: string;
+  firstName: string;
+  lastName: string;
+  email: string | null;
+  phone: string | null;
+  roleTitle: string | null;
+  knowsFrom: string | null;
+  capabilityNote: string | null;
+  notes: string | null;
+};
+
+export type UpdateContactBody = Omit<CreateContactBody, "companyId">;
+
+export async function createContact(body: CreateContactBody): Promise<Contact> {
+  return postJson<Contact>("/api/contacts", body);
+}
+
+export async function updateContact(id: string, body: UpdateContactBody): Promise<Contact> {
+  return putJson<Contact>(`/api/contacts/${encodeURIComponent(id)}`, body);
+}
+
+export async function deleteContact(id: string): Promise<void> {
+  return deleteResource(`/api/contacts/${encodeURIComponent(id)}`);
+}
+
+export type TimelineEntryType =
+  | "email"
+  | "meetingNote"
+  | "callSummary"
+  | "manualNote"
+  | "researchNote";
+
+export type TimelineSource =
+  | "manual"
+  | "email"
+  | "botEmail"
+  | "forwardedEmail"
+  | "plaud"
+  | "research"
+  | "system";
+
+export type CreateTimelineBody = {
+  contactId: string;
+  type: TimelineEntryType;
+  source: TimelineSource;
+  title: string;
+  content: string;
+  occurredAt: string;
+};
+
+export async function createTimelineEntry(body: CreateTimelineBody): Promise<TimelineEntry> {
+  return postJson<TimelineEntry>("/api/timelineentries", body);
+}
+
+export type UpdateTimelineBody = Omit<CreateTimelineBody, "contactId">;
+
+export async function updateTimelineEntry(id: string, body: UpdateTimelineBody): Promise<TimelineEntry> {
+  return putJson<TimelineEntry>(`/api/timelineentries/${encodeURIComponent(id)}`, body);
+}
+
+export async function deleteTimelineEntry(id: string): Promise<void> {
+  return deleteResource(`/api/timelineentries/${encodeURIComponent(id)}`);
 }
 
 export async function fetchCompanies(): Promise<Company[]> {
@@ -103,6 +228,50 @@ export async function fetchTimeline(params?: {
   if (params?.take) sp.set("take", String(params.take));
   const q = sp.toString();
   return fetchJson<TimelineEntry[]>(`/api/timelineentries${q ? `?${q}` : ""}`);
+}
+
+export type SearchCompanyHit = {
+  id: string;
+  name: string;
+  type: string;
+  status: CompanyStatus;
+  accentColor: string | null;
+};
+
+export type SearchContactHit = {
+  id: string;
+  companyId: string;
+  companyName: string;
+  firstName: string;
+  lastName: string;
+  email: string | null;
+};
+
+export type SearchTimelineHit = {
+  id: string;
+  companyId: string;
+  companyName: string;
+  contactId: string;
+  contactName: string;
+  title: string;
+  contentPreview: string;
+  occurredAt: string;
+  type: string;
+  source: string;
+};
+
+export type SearchResponse = {
+  query: string;
+  companies: SearchCompanyHit[];
+  contacts: SearchContactHit[];
+  timelineEntries: SearchTimelineHit[];
+};
+
+export async function fetchSearch(q: string, take?: number): Promise<SearchResponse> {
+  const sp = new URLSearchParams();
+  sp.set("q", q);
+  if (take != null) sp.set("take", String(take));
+  return fetchJson<SearchResponse>(`/api/search?${sp.toString()}`);
 }
 
 export function formatDateTime(iso: string): string {

@@ -9,6 +9,7 @@ import { fetchCompanies, fetchTimeline, formatDateTime } from "@/lib/api";
 import { mainNav } from "@/lib/nav";
 import { SettingsTrigger } from "./settings-provider";
 import { LogoMark } from "./logo-mark";
+import { TimelineEntryTypeIcon } from "./timeline-entry-type";
 
 function Hairline() {
   return <div className="h-px w-full shrink-0 bg-[var(--hairline)]" />;
@@ -119,7 +120,8 @@ export function NavSidebar() {
               <li key={ev.id} className="border-b border-[var(--hairline)] px-0 pb-2 last:border-0">
                 <Link href={`/events#${ev.id}`} className="block hover:text-[var(--fg)]">
                   <span className="line-clamp-2 text-[var(--fg-muted)]">{ev.title}</span>
-                  <span className="mt-0.5 block text-[10px] text-[var(--fg-muted)] opacity-80">
+                  <span className="mt-0.5 flex items-center gap-1.5 text-[10px] text-[var(--fg-muted)] opacity-80">
+                    <TimelineEntryTypeIcon type={ev.type} className="h-2.5 w-2.5 shrink-0" />
                     {formatDateTime(ev.occurredAt)}
                   </span>
                 </Link>

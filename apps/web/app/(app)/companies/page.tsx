@@ -1,9 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Suspense, useEffect, useState } from "react";
+import { CompanyForm } from "@/components/company-form";
+import { Modal } from "@/components/modal";
 import type { Company } from "@/lib/api";
-import { fetchCompanies } from "@/lib/api";
+import { createCompany, fetchCompanies } from "@/lib/api";
 
 const statusLabel: Record<string, string> = {
   active: "Aktiv",
@@ -12,9 +15,13 @@ const statusLabel: Record<string, string> = {
   archived: "Archiviert",
 };
 
-export default function CompaniesPage() {
+function CompaniesPageInner() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const [rows, setRows] = useState<Company[]>([]);
   const [err, setErr] = useState<string | null>(null);
+  const [createOpen, setCreateOpen] = useState(false);
+  const [createFormKey, setCreateFormKey] = useState(0);
 
   useEffect(() => {
     let c = false;
@@ -34,12 +41,31 @@ export default function CompaniesPage() {
     };
   }, []);
 
+  useEffect(() => {
+    if (searchParams.get("new") !== "1") return;
+    setCreateOpen(true);
+    setCreateFormKey((k) => k + 1);
+    router.replace("/companies", { scroll: false });
+  }, [searchParams, router]);
+
   return (
     <main className="p-6 md:p-10">
-      <header className="mb-8 border-b border-[var(--hairline)] pb-6">
-        <h1 className="text-xl font-medium">Firmen</h1>
-        <p className="mt-1 text-sm text-[var(--fg-muted)]">Alle Firmen mit Typ, Status und Kennfarbe.</p>
-        {err && <p className="mt-2 text-sm text-red-500">{err}</p>}
+      <header className="mb-8 flex flex-col gap-4 border-b border-[var(--hairline)] pb-6 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <h1 className="text-xl font-medium">Firmen</h1>
+          <p className="mt-1 text-sm text-[var(--fg-muted)]">Alle Firmen mit Typ, Status und Kennfarbe.</p>
+          {err && <p className="mt-2 text-sm text-red-500">{err}</p>}
+        </div>
+        <button
+          type="button"
+          className="inline-flex w-fit items-center rounded-sm border border-[var(--hairline)] bg-[var(--hover)] px-4 py-2 text-sm font-medium hover:bg-[var(--hairline)]"
+          onClick={() => {
+            setCreateFormKey((k) => k + 1);
+            setCreateOpen(true);
+          }}
+        >
+          Neue Firma
+        </button>
       </header>
 
       <div className="overflow-x-auto border border-[var(--hairline)]">
@@ -83,6 +109,36 @@ export default function CompaniesPage() {
           <p className="p-6 text-sm text-[var(--fg-muted)]">Noch keine Firmen.</p>
         )}
       </div>
+
+      <Modal open={createOpen} onClose={() => setCreateOpen(false)} title="Neue Firma">
+        <CompanyForm
+          key={createFormKey}
+          compact
+          submitLabel="Firma anlegen"
+          onSubmit={async (body) => {
+            const co = await createCompany(body);
+            setCreateOpen(false);
+            const list = await fetchCompanies();
+            setRows(list);
+            router.push(`/companies/${co.id}`);
+          }}
+          onCancel={() => setCreateOpen(false)}
+        />
+      </Modal>
     </main>
+  );
+}
+
+export default function CompaniesPage() {
+  return (
+    <Suspense
+      fallback={
+        <main className="p-6 md:p-10">
+          <p className="text-sm text-[var(--fg-muted)]">Laden…</p>
+        </main>
+      }
+    >
+      <CompaniesPageInner />
+    </Suspense>
   );
 }

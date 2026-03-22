@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import type { TimelineEntry } from "@/lib/api";
+import { TimelineEntryTypeBadge } from "@/components/timeline-entry-type";
 import { fetchTimeline, formatDateTime } from "@/lib/api";
 
 export default function EventsPage() {
@@ -46,7 +47,13 @@ export default function EventsPage() {
           >
             <div className="font-medium">{ev.title}</div>
             <div className="mt-1 text-xs text-[var(--fg-muted)]">
-              {formatDateTime(ev.occurredAt)} · {ev.type} · {ev.source}
+              <span className="inline-flex flex-wrap items-center gap-x-1.5 gap-y-0.5">
+                <span>{formatDateTime(ev.occurredAt)}</span>
+                <span aria-hidden>·</span>
+                <TimelineEntryTypeBadge type={ev.type} />
+                <span aria-hidden>·</span>
+                <span>{ev.source}</span>
+              </span>
             </div>
             <p className="mt-2 line-clamp-3 text-sm text-[var(--fg-muted)]">{ev.content}</p>
             <div className="mt-3 flex gap-4 text-xs">
