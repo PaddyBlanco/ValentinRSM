@@ -150,6 +150,26 @@ cd apps/web
 npm run build
 ```
 
+## 5.1 Datenbank-Migrationen (API)
+
+Die API nutzt **EF Core** mit **SQL Server**. Migrationen liegen unter `apps/api/Data/Migrations`.
+
+- **Automatisch:** In **Development** wendet die API beim Start `Migrate` an (Docker-Compose setzt `ASPNETCORE_ENVIRONMENT=Development` für die API).
+- **Manuell:** Mit laufendem SQL Server und gesetztem Connection String:
+
+```powershell
+cd apps/api
+dotnet ef database update
+```
+
+Neue Migration nach Änderungen am Modell:
+
+```powershell
+cd apps/api
+dotnet ef migrations add BeschreibungDerAenderung
+```
+
+
 ---
 
 ## 6. Häufige Probleme
@@ -165,6 +185,9 @@ npm run build
 
 - **Port bereits belegt**  
   In `docker-compose.yml` die Mappings `8080:8080`, `3000:3000`, `1433:1433`, `5678:5678` anpassen oder den blockierenden Prozess beenden.
+
+- **API bricht beim Start ab (Migration / Datenbank)**  
+  SQL Server nicht erreichbar, falsches Passwort im Connection String oder DB noch nicht bereit – Verbindung testen, ggf. `dotnet ef database update` in `apps/api` ausführen, wenn ihr nicht mit `Development`/Auto-Migrate arbeitet.
 
 ---
 

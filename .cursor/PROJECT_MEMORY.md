@@ -29,6 +29,7 @@
 - **Web lokal:** `cd apps/web` → `npm install` → `npm run dev`
 - **API Build:** `dotnet build ValentinRSM.slnx`
 - **Web Build:** `cd apps/web` → `npm run build`
+- **EF-Migrationen:** `cd apps/api` → `dotnet ef database update` (Tool: `dotnet tool install -g dotnet-ef`); neue Migration: `dotnet ef migrations add Name`
 
 ## Durable Lessons
 

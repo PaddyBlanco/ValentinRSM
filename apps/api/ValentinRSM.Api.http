@@ -1,6 +1,32 @@
-@ValentinRSM.Api_HostAddress = http://localhost:5112
+@host = http://localhost:5112
 
-GET {{ValentinRSM.Api_HostAddress}}/weatherforecast/
+### Health
+GET {{host}}/health
+Accept: application/json
+
+### Swagger (nur Development)
+# Browser: {{host}}/swagger
+
+### Companies
+GET {{host}}/api/companies
 Accept: application/json
 
 ###
+POST {{host}}/api/companies
+Content-Type: application/json
+
+{
+  "name": "Beispiel GmbH",
+  "type": "Kunde",
+  "status": "active",
+  "accentColor": "#2563eb",
+  "notes": null
+}
+
+### Contacts (optional ?companyId=)
+GET {{host}}/api/contacts
+Accept: application/json
+
+### Timeline (optional ?companyId= &contactId=)
+GET {{host}}/api/timelineentries
+Accept: application/json
