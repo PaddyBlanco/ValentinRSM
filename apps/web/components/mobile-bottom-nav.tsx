@@ -1,20 +1,23 @@
 "use client";
 
+import { faGear } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { mainNav } from "@/lib/nav";
+import { useSettings } from "./settings-provider";
 
-/** Feste Leiste unten: Start, Firmen, Kontakte, Ereignisse (nur unter md). */
+/** Feste Leiste unten: Start, Firmen, Kontakte, Ereignisse, Einstellungen (nur unter md). */
 export function MobileBottomNav() {
   const pathname = usePathname();
+  const { setOpen: openSettings } = useSettings();
 
   return (
     <nav
       className="fixed bottom-0 left-0 right-0 z-50 border-t border-[var(--hairline)] bg-[var(--bg)]/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-sm md:hidden"
-      aria-label="Hauptnavigation"
+      aria-label="Hauptnavigation und Einstellungen"
     >
-      <ul className="flex h-14 w-full flex-row items-stretch justify-around">
+      <ul className="flex h-16 w-full flex-row items-stretch justify-around">
         {mainNav.map((item) => {
           const active =
             pathname === item.href ||
@@ -23,16 +26,27 @@ export function MobileBottomNav() {
             <li key={item.href} className="flex min-w-0 flex-1">
               <Link
                 href={item.href}
-                className={`flex flex-1 flex-col items-center justify-center gap-0.5 px-1 py-1.5 text-[10px] font-medium leading-tight transition-colors ${
+                className={`flex flex-1 items-center justify-center px-1 py-2 transition-colors ${
                   active ? "text-[var(--fg)]" : "text-[var(--fg-muted)]"
                 }`}
+                aria-current={active ? "page" : undefined}
               >
-                <FontAwesomeIcon icon={item.icon} className="h-5 w-5 shrink-0" aria-hidden />
-                <span className="max-w-full truncate">{item.mobileLabel}</span>
+                <FontAwesomeIcon icon={item.icon} className="h-6 w-6 shrink-0" aria-hidden />
+                <span className="sr-only">{item.mobileLabel}</span>
               </Link>
             </li>
           );
         })}
+        <li className="flex min-w-0 flex-1">
+          <button
+            type="button"
+            onClick={() => openSettings(true)}
+            className="flex flex-1 items-center justify-center px-1 py-2 text-[var(--fg-muted)] transition-colors hover:text-[var(--fg)] active:text-[var(--fg)]"
+            aria-label="Einstellungen öffnen"
+          >
+            <FontAwesomeIcon icon={faGear} className="h-6 w-6 shrink-0" aria-hidden />
+          </button>
+        </li>
       </ul>
     </nav>
   );

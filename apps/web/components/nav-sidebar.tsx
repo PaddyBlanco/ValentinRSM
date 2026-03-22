@@ -7,7 +7,7 @@ import { useEffect, useState } from "react";
 import type { Company, TimelineEntry } from "@/lib/api";
 import { fetchCompanies, fetchTimeline, formatDateTime } from "@/lib/api";
 import { mainNav } from "@/lib/nav";
-import { ThemeToggle } from "./theme-toggle";
+import { SettingsTrigger } from "./settings-provider";
 import { LogoMark } from "./logo-mark";
 
 function Hairline() {
@@ -130,7 +130,7 @@ export function NavSidebar() {
       </div>
 
       <div className="mt-auto border-t border-[var(--hairline)] p-3">
-        <ThemeToggle />
+        <SettingsTrigger variant="sidebar" />
       </div>
     </aside>
   );
