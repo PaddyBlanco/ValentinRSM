@@ -182,11 +182,15 @@ Manual, Email, BotEmail, ForwardedEmail, Plaud, Research, System
 
 Fokus auf wenige klare Screens:
 
+- **Start / Dashboard:** Überblick (aktive Firmen, letzte Kontakte, letzte Aktivitäten)
 - Firmenübersicht
 - Kontaktübersicht
 - Firmen-Detailseite
 - Kontakt-Detailseite
+- **Letzte Ereignisse** (global, alle Firmen)
 - Globale Suche
+
+**App-Shell:** feste **Navigation links** mit Logo, aktiven Firmen (Kurzliste), **letzten fünf Ereignissen**, unten **Hell-/Dunkelmodus**; sehr schlichtes UI mit **1px-Trennlinien** (Hairstrokes), Hintergrund fast weiß bzw. fast schwarz, optionales großes **Wasserzeichen** (Pawn) im Hintergrund.
 
 **Firmen-Detailseite:** Name, Typ (Freitext), Status, Kennfarbe, Freitext, zugeordnete Kontakte, Timeline
 

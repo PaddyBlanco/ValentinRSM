@@ -11,13 +11,24 @@ namespace ValentinRSM.Api.Controllers;
 public class ContactsController(ValentinRsmDbContext db) : ControllerBase
 {
     [HttpGet]
-    public async Task<ActionResult<IReadOnlyList<ContactResponse>>> List([FromQuery] Guid? companyId, CancellationToken ct)
+    public async Task<ActionResult<IReadOnlyList<ContactResponse>>> List(
+        [FromQuery] Guid? companyId,
+        [FromQuery] int? take,
+        [FromQuery] string? sort,
+        CancellationToken ct)
     {
         var q = db.Contacts.AsNoTracking();
         if (companyId.HasValue)
             q = q.Where(x => x.CompanyId == companyId.Value);
+
+        var recent = string.Equals(sort, "recent", StringComparison.OrdinalIgnoreCase);
+        q = recent
+            ? q.OrderByDescending(x => x.CreatedAt)
+            : q.OrderBy(x => x.LastName).ThenBy(x => x.FirstName);
+        if (take is > 0)
+            q = q.Take(Math.Min(take.Value, 200));
+
         var list = await q
-            .OrderBy(x => x.LastName).ThenBy(x => x.FirstName)
             .Select(x => ToResponse(x))
             .ToListAsync(ct);
         return Ok(list);

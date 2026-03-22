@@ -14,6 +14,7 @@ public class TimelineEntriesController(ValentinRsmDbContext db) : ControllerBase
     public async Task<ActionResult<IReadOnlyList<TimelineEntryResponse>>> List(
         [FromQuery] Guid? companyId,
         [FromQuery] Guid? contactId,
+        [FromQuery] int? take,
         CancellationToken ct)
     {
         IQueryable<TimelineEntry> q = db.TimelineEntries.AsNoTracking().Include(e => e.Contact);
@@ -22,8 +23,11 @@ public class TimelineEntriesController(ValentinRsmDbContext db) : ControllerBase
         if (companyId.HasValue)
             q = q.Where(e => e.Contact.CompanyId == companyId.Value);
 
+        q = q.OrderByDescending(e => e.OccurredAt);
+        if (take is > 0)
+            q = q.Take(Math.Min(take.Value, 200));
+
         var list = await q
-            .OrderByDescending(e => e.OccurredAt)
             .Select(e => new TimelineEntryResponse(
                 e.Id,
                 e.Contact.CompanyId,
