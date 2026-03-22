@@ -7,7 +7,7 @@
 
 - **Internes RM-System** für 2 Nutzer – kein SaaS, kein generisches CRM.
 - **Monolith:** ein Backend (ASP.NET Core / .NET 10), ein Frontend (Next.js), eine DB (**SQL Server**, lokal z. B. per Docker-Image); Docker Compose; n8n nur via **API**.
-- **Primärobjekt Firma;** Kontakt gehört **genau einer** Firma; Firma hat genau einen **Typ** und einen **Status**.
+- **Primärobjekt Firma;** Kontakt gehört **genau einer** Firma; Firma hat **Typ (Freitext)** und **Status** (fest); optional **Kennfarbe** für Listen/Übersichten.
 - **Timeline:** chronologisch; jeder Eintrag hat **Firma + Kontakt**; kein WhatsApp in der Timeline; Statuswechsel **keine** Timeline-Events.
 - **Bot v1:** nur Kontakt hinzufügen, Firma erkennen/anlegen, E-Mail zuordnen; **nur Backend**, keine direkte DB.
 - **Suche** ist Kernfeature (Volltext über Stammdaten + Timeline inkl. E-Mails/Notizen).

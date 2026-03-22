@@ -39,9 +39,13 @@ Die Beziehung hängt immer an der Firma.
 
 Ein Kontakt ist immer genau einer Firma zugeordnet.
 
-### Eine Firma hat genau einen Typ
+### Eine Firma hat genau einen Typ (Freitext)
 
-Mögliche Typen: **Kunde**, **Partner**, **Berater**.
+Der **Typ** ist ein **Freitextfeld** (kein festes Dropdown mit wenigen Enum-Werten). Dort steht z. B. **Kunde**, **Partner**, **Bank**, **Investor**, **Berater** oder beliebige eigene Bezeichnungen – je nach Bedarf, ohne Schema-Anpassung.
+
+### Eine Firma hat eine Kennfarbe (Übersicht)
+
+Jede Firma kann eine **Farbe** (Akzentfarbe) haben, damit sie in **Listen und Übersichten** schneller erkennbar ist (z. B. farbiger Balken oder Punkt neben dem Namen). Die Farbe ist **präsentationsorientiert**, kein Ersatz für Typ oder Status.
 
 ### Eine Firma hat genau einen Status
 
@@ -91,7 +95,7 @@ Der Bot schreibt **nicht direkt** in die Datenbank – er ruft **immer das Backe
 
 Die Volltextsuche soll u. a. durchsuchen:
 
-- Firmenname, Firmen-Freitext
+- Firmenname, **Firmen-Typ (Freitext)**, Firmen-Freitext
 - Kontakt: Vorname, Nachname, E-Mail, Telefon, Position, „Woher kenne ich ihn“, „Was kann er“, Kontakt-Freitext
 - Timeline: Titel, Inhalt
 - vollständige E-Mails, Meetingnotizen, Telefonnotizen
@@ -126,7 +130,7 @@ Zusätzlich:
 - Firmen anlegen / bearbeiten / anzeigen
 - Kontakte anlegen / bearbeiten / anzeigen
 - Kontakt immer einer Firma zuordnen
-- Firma mit Typ und Status
+- Firma mit **Typ (Freitext)**, **Status** und optionaler **Kennfarbe**
 - Freitext bei Firma und Kontakt
 - Timeline-Einträge anlegen / anzeigen
 - E-Mails vollständig speichern
@@ -152,7 +156,7 @@ Zusätzlich:
 
 Repräsentiert eine Firma.
 
-**Felder grob:** Id, Name, Type, Status, Notes, CreatedAt, UpdatedAt
+**Felder grob:** Id, Name, **Type** (Freitext, z. B. „Kunde“, „Partner“, „Bank“, „Investor“), **Status** (fest: Aktiv / Im Blick / Ruhend / Archiviert), **AccentColor** (optional, z. B. CSS-Hex `#RRGGBB` für Listen/Übersicht), Notes, CreatedAt, UpdatedAt
 
 ### Contact
 
@@ -184,7 +188,9 @@ Fokus auf wenige klare Screens:
 - Kontakt-Detailseite
 - Globale Suche
 
-**Firmen-Detailseite:** Name, Typ, Status, Freitext, zugeordnete Kontakte, Timeline
+**Firmen-Detailseite:** Name, Typ (Freitext), Status, Kennfarbe, Freitext, zugeordnete Kontakte, Timeline
+
+**Firmenübersicht:** Typ und **Farbe** nutzen, um Einträge **auf einen Blick** zu unterscheiden (z. B. farbiges Label oder Indikator pro Zeile).
 
 **Kontakt-Detailseite:** Stammdaten, Firma, Freitext, Timeline
 
@@ -194,6 +200,7 @@ Fokus auf wenige klare Screens:
 - mobil gut benutzbar
 - keine überladene Oberfläche
 - Fokus auf **Lesen, Finden und schnelles Erfassen**
+- **Firmenfarbe** in Listen nutzen, um Firmen **visuell** schneller zu scannen (ohne die Oberfläche zu überladen)
 
 ## Entwicklungsreihenfolge
 
