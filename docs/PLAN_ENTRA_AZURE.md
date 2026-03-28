@@ -6,7 +6,7 @@
 
 - **Web** (`apps/web`): Nur eingeloggte Nutzer sehen die App; Login über Microsoft (Entra ID).
 - **API** (`apps/api`): Geschützte Aufrufe mit **Bearer-JWT** von Entra; API validiert Signatur, Aussteller und Audience.
-- **2 User**: Primär **in Entra** steuern (Enterprise App / App-Registrierung nur jenen **2 Benutzern** oder einer **Gruppe** zuweisen). Optional zusätzlich `ALLOWED_EMAILS` in Azure Container Apps / Key Vault (nicht im Git).
+- **2 User**: **in Entra** steuern (Enterprise App / App-Registrierung nur jenen **2 Benutzern** oder einer **Gruppe** zuweisen). Die App vertraut dem Login; keine E-Mail-Allowlist in der Web-App.
 
 ## Ablauf (Überblick)
 
@@ -46,7 +46,7 @@ Dokumentation der Werte (Tenant-ID, Client-ID, API-URI, Scope) in `docs/INSTALLA
 
 - **Bibliothek**: **Auth.js (next-auth v5)** mit Provider **Microsoft Entra ID**.
 - Typische neue Dateien:
-  - `apps/web/auth.ts` – Provider, optional `callbacks.signIn` gegen `ALLOWED_EMAILS`.
+  - `apps/web/auth.ts` – Provider; `callbacks.signIn` vertraut Entra (keine App-seitige E-Mail-Allowlist).
   - `apps/web/app/api/auth/[...nextauth]/route.ts`.
   - `apps/web/middleware.ts` – Pfade unter `app/(app)/` schützen.
 - Login-Seite z. B. `app/(auth)/login/page.tsx`.
@@ -61,13 +61,12 @@ Dokumentation der Werte (Tenant-ID, Client-ID, API-URI, Scope) in `docs/INSTALLA
 - **CORS**: `AllowedOrigins` um produktive Web-URL erweitern.
 - Konfiguration: `AzureAd:TenantId`, `AzureAd:ClientId`, `AzureAd:Audience`.
 
-## 4. Allowlist „nur 2 User“
+## 4. Wer darf sich anmelden?
 
-| Variante | Vorteil |
+| Variante | Hinweis |
 |----------|---------|
-| **Nur Entra** | Keine E-Mail-Liste im Repo; Zuweisung im Portal. |
-| **Env `ALLOWED_EMAILS`** | Einfaches Debugging; Azure App Setting / Key Vault. |
-| **Empfehlung** | **Entra als Hauptregel**; optional **B** für Defense-in-Depth. |
+| **Entra (Unternehmens-App, Zuweisungen, Gruppen)** | **Genutzt:** Zugang nur hier steuern; die App führt keine zweite Allowlist. |
+| **Conditional Access** | Zusätzliche Regeln (Standort, Gerät, …) in Entra. |
 
 ## 5. Azure-Hosting (Überblick)
 

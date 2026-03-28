@@ -1,6 +1,9 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc.Authorization;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Identity.Web;
 using ValentinRSM.Api.Data;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -18,7 +21,24 @@ builder.Services.AddCors(options =>
     });
 });
 
-builder.Services.AddControllers()
+var authModeEntra = string.Equals(
+    builder.Configuration["Auth:Mode"],
+    "Entra",
+    StringComparison.OrdinalIgnoreCase);
+
+if (authModeEntra)
+{
+    builder.Services.AddMicrosoftIdentityWebApiAuthentication(builder.Configuration, "AzureAd");
+    builder.Services.AddAuthorization();
+}
+
+builder.Services.AddControllers(o =>
+    {
+        if (authModeEntra)
+        {
+            o.Filters.Add(new AuthorizeFilter(new AuthorizationPolicyBuilder().RequireAuthenticatedUser().Build()));
+        }
+    })
     .AddJsonOptions(o =>
     {
         o.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
@@ -29,8 +49,13 @@ builder.Services.AddControllers()
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
-    ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+if (string.IsNullOrWhiteSpace(connectionString))
+{
+    throw new InvalidOperationException(
+        "Connection string 'DefaultConnection' is missing or empty. Set it via environment (ConnectionStrings__DefaultConnection), " +
+        "User Secrets (dotnet user-secrets), or a local appsettings override — do not commit passwords to git.");
+}
 builder.Services.AddDbContext<ValentinRsmDbContext>(options =>
     options.UseSqlServer(connectionString));
 
@@ -43,6 +68,12 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseCors();
+
+if (authModeEntra)
+{
+    app.UseAuthentication();
+    app.UseAuthorization();
+}
 
 app.MapControllers();
 

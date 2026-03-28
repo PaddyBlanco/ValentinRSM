@@ -1,5 +1,6 @@
 "use client";
 
+import { useSession } from "next-auth/react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
@@ -19,6 +20,8 @@ const SEARCH_PAGE_SIZE = 5;
 function SearchContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { status: sessionStatus } = useSession();
+  const sessionReady = sessionStatus !== "loading";
   const qParam = (searchParams.get("q") ?? "").trim();
   const [input, setInput] = useState(qParam);
   const [data, setData] = useState<SearchResponse | null>(null);
@@ -38,6 +41,7 @@ function SearchContent() {
       setErr(null);
       return;
     }
+    if (!sessionReady) return;
     let c = false;
     setLoading(true);
     (async () => {
@@ -59,7 +63,7 @@ function SearchContent() {
     return () => {
       c = true;
     };
-  }, [qParam]);
+  }, [qParam, sessionReady]);
 
   function onSubmit(e: React.FormEvent) {
     e.preventDefault();

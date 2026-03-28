@@ -113,6 +113,7 @@ Zusätzlich:
 | Frontend      | Next.js, React, TypeScript                 |
 | Backend       | ASP.NET Core Web API, **.NET 10**, EF Core |
 | Datenbank     | SQL-Server                                 |
+| Anmeldung     | Microsoft Entra ID (Auth.js, JWT-Bearer)   |
 | Automation    | n8n                                        |
 | Infrastruktur | Docker, Docker Compose                     |
 
@@ -139,6 +140,7 @@ Zusätzlich:
 - globale Kontaktübersicht
 - globale Firmenübersicht
 - Bot-Endpunkte für: Kontakt hinzufügen, Firma erkennen/anlegen, E-Mail zuordnen
+- **Anmeldung** mit Microsoft Entra ID (interne Nutzer; Zuweisung in Entra, siehe [INSTALLATION.md](INSTALLATION.md))
 
 ### Nicht Teil von v1
 

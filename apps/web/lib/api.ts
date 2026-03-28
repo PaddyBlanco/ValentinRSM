@@ -61,10 +61,31 @@ function apiUrl(path: string): string {
   return `${getApiBaseUrl().replace(/\/$/, "")}${path.startsWith("/") ? path : `/${path}`}`;
 }
 
+type BearerGetter = () => string | null | undefined;
+
+let getBearerToken: BearerGetter = () => undefined;
+
+/** Wird vom Client (`ApiBearerBridge`) gesetzt, damit Entra-Tokens mitgesendet werden. */
+export function setApiBearerTokenGetter(fn: BearerGetter) {
+  getBearerToken = fn;
+}
+
+function withAuthHeaders(init?: RequestInit): RequestInit {
+  const token = getBearerToken?.();
+  const headers = new Headers(init?.headers);
+  if (token && !headers.has("Authorization")) {
+    headers.set("Authorization", `Bearer ${token}`);
+  }
+  if (!headers.has("Accept")) {
+    headers.set("Accept", "application/json");
+  }
+  return { ...init, headers };
+}
+
 export async function fetchJson<T>(path: string, init?: RequestInit): Promise<T> {
+  const merged = withAuthHeaders(init);
   const res = await fetch(apiUrl(path), {
-    ...init,
-    headers: { Accept: "application/json", ...init?.headers },
+    ...merged,
     next: init?.next ?? { revalidate: 0 },
   });
   if (!res.ok) {
@@ -75,11 +96,12 @@ export async function fetchJson<T>(path: string, init?: RequestInit): Promise<T>
 }
 
 export async function postJson<T>(path: string, body: unknown): Promise<T> {
-  const res = await fetch(apiUrl(path), {
+  const merged = withAuthHeaders({
     method: "POST",
-    headers: { Accept: "application/json", "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),
   });
+  const res = await fetch(apiUrl(path), merged);
   if (!res.ok) {
     const text = await res.text();
     throw new Error(`${res.status} ${res.statusText}: ${text}`);
@@ -88,11 +110,12 @@ export async function postJson<T>(path: string, body: unknown): Promise<T> {
 }
 
 export async function putJson<T>(path: string, body: unknown): Promise<T> {
-  const res = await fetch(apiUrl(path), {
+  const merged = withAuthHeaders({
     method: "PUT",
-    headers: { Accept: "application/json", "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),
   });
+  const res = await fetch(apiUrl(path), merged);
   if (!res.ok) {
     const text = await res.text();
     throw new Error(`${res.status} ${res.statusText}: ${text}`);
@@ -101,10 +124,8 @@ export async function putJson<T>(path: string, body: unknown): Promise<T> {
 }
 
 export async function deleteResource(path: string): Promise<void> {
-  const res = await fetch(apiUrl(path), {
-    method: "DELETE",
-    headers: { Accept: "application/json" },
-  });
+  const merged = withAuthHeaders({ method: "DELETE" });
+  const res = await fetch(apiUrl(path), merged);
   if (!res.ok) {
     const text = await res.text();
     throw new Error(`${res.status} ${res.statusText}: ${text}`);

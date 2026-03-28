@@ -2,6 +2,7 @@
 
 import { faGear, faXmark } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { signOut, useSession } from "next-auth/react";
 import { useTheme } from "next-themes";
 import {
   createContext,
@@ -65,6 +66,33 @@ function AppearanceSelect() {
   );
 }
 
+function SettingsAccountSection() {
+  const { data: session, status } = useSession();
+  const authDisabled = process.env.NEXT_PUBLIC_AUTH_DISABLED === "true";
+  if (authDisabled || status !== "authenticated" || !session?.user) return null;
+
+  return (
+    <section aria-labelledby="settings-account-heading" className="border-t border-[var(--hairline)] pt-6">
+      <h4
+        id="settings-account-heading"
+        className="mb-3 text-[11px] font-semibold uppercase tracking-wider text-[var(--fg-muted)]"
+      >
+        Konto
+      </h4>
+      <p className="mb-3 truncate text-sm text-[var(--fg)]">
+        {session.user.email ?? session.user.name ?? "Angemeldet"}
+      </p>
+      <button
+        type="button"
+        onClick={() => signOut({ callbackUrl: "/login" })}
+        className="rounded-lg border border-[var(--hairline)] bg-[var(--hover)] px-3 py-2 text-sm font-medium text-[var(--fg)] transition hover:bg-[var(--hairline)]"
+      >
+        Abmelden
+      </button>
+    </section>
+  );
+}
+
 function SettingsPanelGeneral() {
   return (
     <div className="flex flex-col gap-6">
@@ -81,6 +109,7 @@ function SettingsPanelGeneral() {
         </h4>
         <AppearanceSelect />
       </section>
+      <SettingsAccountSection />
     </div>
   );
 }

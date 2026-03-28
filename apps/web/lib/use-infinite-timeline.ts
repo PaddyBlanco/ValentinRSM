@@ -1,5 +1,6 @@
 "use client";
 
+import { useSession } from "next-auth/react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { TimelineEntry } from "@/lib/api";
 import { fetchTimeline } from "@/lib/api";
@@ -19,6 +20,8 @@ export function useInfiniteTimeline(
   options?: { enabled?: boolean },
 ) {
   const enabled = options?.enabled ?? true;
+  const { status: sessionStatus } = useSession();
+  const sessionReady = sessionStatus !== "loading";
   const [items, setItems] = useState<TimelineEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
@@ -71,14 +74,16 @@ export function useInfiniteTimeline(
   }, [hasMore]);
 
   useEffect(() => {
-    if (!enabled) {
-      setLoading(false);
-      setItems([]);
-      setHasMore(false);
+    if (!enabled || !sessionReady) {
+      if (!enabled) {
+        setLoading(false);
+        setItems([]);
+        setHasMore(false);
+      }
       return;
     }
     void resetAndLoad();
-  }, [enabled, filters.companyId, filters.contactId, resetAndLoad]);
+  }, [enabled, sessionReady, filters.companyId, filters.contactId, resetAndLoad]);
 
   return {
     items,

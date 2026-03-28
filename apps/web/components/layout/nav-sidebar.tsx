@@ -1,6 +1,7 @@
 "use client";
 
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { useSession } from "next-auth/react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
@@ -28,12 +29,15 @@ const statusSectionLabel: Record<CompanyStatus, string> = {
 
 export function NavSidebar() {
   const pathname = usePathname();
+  const { status: sessionStatus } = useSession();
+  const sessionReady = sessionStatus !== "loading";
   const navRefreshKey = useNavRefreshKey();
   const [companies, setCompanies] = useState<Company[]>([]);
   const [events, setEvents] = useState<TimelineEntry[]>([]);
   const [err, setErr] = useState<string | null>(null);
 
   useEffect(() => {
+    if (!sessionReady) return;
     let cancelled = false;
     (async () => {
       try {
@@ -55,7 +59,7 @@ export function NavSidebar() {
     return () => {
       cancelled = true;
     };
-  }, [navRefreshKey]);
+  }, [navRefreshKey, sessionReady]);
 
   const companiesByStatus = SIDEBAR_STATUS_ORDER.map((status) => ({
     status,

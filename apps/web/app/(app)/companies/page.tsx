@@ -1,5 +1,6 @@
 "use client";
 
+import { useSession } from "next-auth/react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useMemo, useState } from "react";
@@ -12,6 +13,8 @@ import { companyStatusLabel, companyStatusRank, companyStatusTagClass } from "@/
 function CompaniesPageInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { status: sessionStatus } = useSession();
+  const sessionReady = sessionStatus !== "loading";
   const [rows, setRows] = useState<Company[]>([]);
   const [query, setQuery] = useState("");
   const [err, setErr] = useState<string | null>(null);
@@ -19,6 +22,7 @@ function CompaniesPageInner() {
   const [createFormKey, setCreateFormKey] = useState(0);
 
   useEffect(() => {
+    if (!sessionReady) return;
     let c = false;
     (async () => {
       try {
@@ -34,7 +38,7 @@ function CompaniesPageInner() {
     return () => {
       c = true;
     };
-  }, []);
+  }, [sessionReady]);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();

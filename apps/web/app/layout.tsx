@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { GeistMono } from "geist/font/mono";
 import { GeistSans } from "geist/font/sans";
+import { AuthSessionProvider } from "@/components/auth/session-provider";
 import { SettingsProvider } from "@/components/settings/settings-provider";
 import { ThemeProvider } from "@/components/theme-provider";
 import "./globals.css";
@@ -18,9 +19,11 @@ export default function RootLayout({
   return (
     <html lang="de" className={`${GeistSans.variable} ${GeistMono.variable} h-full`} suppressHydrationWarning>
       <body className="min-h-full bg-[var(--bg)] font-sans text-[var(--fg)] antialiased">
-        <ThemeProvider>
-          <SettingsProvider>{children}</SettingsProvider>
-        </ThemeProvider>
+        <AuthSessionProvider>
+          <ThemeProvider>
+            <SettingsProvider>{children}</SettingsProvider>
+          </ThemeProvider>
+        </AuthSessionProvider>
       </body>
     </html>
   );

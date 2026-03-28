@@ -28,6 +28,10 @@ services:
       ASPNETCORE_URLS: http://+:8080
       ConnectionStrings__DefaultConnection: >-
         Server=db,1433;Database=ValentinRSM;User Id=sa;Password=${MSSQL_SA_PASSWORD};TrustServerCertificate=True;MultipleActiveResultSets=true
+      Auth__Mode: ${AUTH_API_MODE:-None}
+      AzureAd__TenantId: ${AZURE_AD_TENANT_ID:-}
+      AzureAd__ClientId: ${AZURE_AD_API_CLIENT_ID:-}
+      AzureAd__Audience: ${AZURE_AD_API_AUDIENCE:-}
     ports:
       - "8080:8080"
     depends_on:
@@ -50,6 +54,13 @@ services:
     environment:
       NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:8080}
       API_INTERNAL_URL: http://api:8080
+      AUTH_SECRET: ${AUTH_SECRET:-}
+      AUTH_URL: ${AUTH_URL:-http://localhost:3000}
+      AUTH_MICROSOFT_ENTRA_ID_ID: ${AUTH_MICROSOFT_ENTRA_ID_ID:-}
+      AUTH_MICROSOFT_ENTRA_ID_SECRET: ${AUTH_MICROSOFT_ENTRA_ID_SECRET:-}
+      AUTH_MICROSOFT_ENTRA_ID_ISSUER: ${AUTH_MICROSOFT_ENTRA_ID_ISSUER:-}
+      AUTH_API_SCOPE: ${AUTH_API_SCOPE:-}
+      AUTH_DISABLED: ${AUTH_DISABLED:-}
     ports:
       - "3000:3000"
     depends_on:

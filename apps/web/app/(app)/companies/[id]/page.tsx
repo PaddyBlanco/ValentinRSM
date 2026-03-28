@@ -1,5 +1,6 @@
 "use client";
 
+import { useSession } from "next-auth/react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -38,6 +39,8 @@ const statusLabel: Record<string, string> = {
 export default function CompanyDetailPage() {
   const params = useParams();
   const router = useRouter();
+  const { status: sessionStatus } = useSession();
+  const sessionReady = sessionStatus !== "loading";
   const bumpNavRefresh = useBumpNavRefresh();
   const id = params.id as string;
   const [company, setCompany] = useState<Company | null>(null);
@@ -71,7 +74,7 @@ export default function CompanyDetailPage() {
   }
 
   useEffect(() => {
-    if (!id) return;
+    if (!id || !sessionReady) return;
     let c = false;
     (async () => {
       try {
@@ -88,7 +91,7 @@ export default function CompanyDetailPage() {
     return () => {
       c = true;
     };
-  }, [id]);
+  }, [id, sessionReady]);
 
   async function onSaveCompany(body: CreateCompanyBody) {
     if (!company) return;

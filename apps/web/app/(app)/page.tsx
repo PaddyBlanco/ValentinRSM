@@ -1,5 +1,6 @@
 "use client";
 
+import { useSession } from "next-auth/react";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import type {
@@ -34,16 +35,18 @@ function Panel({
   children: React.ReactNode;
 }) {
   return (
-    <section className="border border-[var(--hairline)]/80 bg-[color-mix(in_oklab,var(--bg-elevated)_32%,transparent)] backdrop-blur-sm">
-      <div className="border-b border-[var(--hairline)]/80 px-4 py-3 bg-[color-mix(in_oklab,var(--bg-elevated)_22%,transparent)]">
+    <section className="min-w-0 overflow-hidden rounded-lg border border-[var(--hairline)]/80 bg-[color-mix(in_oklab,var(--bg-elevated)_32%,transparent)] backdrop-blur-sm">
+      <div className="border-b border-[var(--hairline)]/80 bg-[color-mix(in_oklab,var(--bg-elevated)_22%,transparent)] px-3 py-2.5 sm:px-4 sm:py-3">
         <h2 className="text-sm font-medium tracking-wide">{title}</h2>
       </div>
-      <div className="p-4">{children}</div>
+      <div className="p-3 sm:p-4">{children}</div>
     </section>
   );
 }
 
 export default function HomePage() {
+  const { status: sessionStatus } = useSession();
+  const sessionReady = sessionStatus !== "loading";
   const [companies, setCompanies] = useState<Company[]>([]);
   const [recentFocus, setRecentFocus] = useState<CompanyRecentActivity[]>([]);
   const [contacts, setContacts] = useState<Contact[]>([]);
@@ -52,6 +55,7 @@ export default function HomePage() {
   const [err, setErr] = useState<string | null>(null);
 
   useEffect(() => {
+    if (!sessionReady) return;
     let c = false;
     (async () => {
       try {
@@ -75,7 +79,7 @@ export default function HomePage() {
     return () => {
       c = true;
     };
-  }, []);
+  }, [sessionReady]);
 
   const companyById = useMemo(() => new Map(companies.map((c) => [c.id, c])), [companies]);
 
@@ -88,21 +92,21 @@ export default function HomePage() {
   }, [recentFocus]);
 
   return (
-    <main className="p-6 md:p-10">
-      <div className="mx-auto w-[98%] max-w-full md:w-[80%]">
+    <main className="w-full min-w-0 px-4 pb-8 pt-4 sm:px-6 sm:pb-10 sm:pt-6 md:p-10">
+      <div className="mx-auto w-full max-w-6xl md:w-[min(100%,80%)]">
         {err && <p className="mb-4 text-sm text-red-500">{err}</p>}
 
-        <div className="grid gap-6 lg:grid-cols-2">
+        <div className="grid min-w-0 gap-4 sm:gap-6 lg:grid-cols-2">
         <Panel title="Aktiv & im Blick">
           <ul className="space-y-2 text-sm">
             {recentFocusSorted.map((c) => (
               <li
                 key={c.id}
-                className="flex flex-wrap items-start justify-between gap-x-3 gap-y-1 border-b border-[var(--hairline)] py-2 last:border-0"
+                className="flex items-start gap-2 border-b border-[var(--hairline)] py-2.5 last:border-0 sm:gap-3"
               >
                 <Link
                   href={`/companies/${c.id}`}
-                  className="flex min-w-0 max-w-[min(100%,18rem)] items-start gap-2 hover:underline"
+                  className="flex min-w-0 flex-1 items-start gap-2 hover:underline"
                 >
                   {c.accentColor ? (
                     <span
@@ -113,13 +117,13 @@ export default function HomePage() {
                     <span className="mt-0.5 h-2.5 w-2.5 shrink-0 rounded-full bg-[var(--fg-muted)] opacity-30" />
                   )}
                   <span className="min-w-0">
-                    <span className="block truncate font-medium leading-tight">{c.name}</span>
+                    <span className="block break-words font-medium leading-tight">{c.name}</span>
                     <span className="mt-0.5 block text-xs leading-tight text-[var(--fg-muted)] no-underline">
                       {c.type}
                     </span>
                   </span>
                 </Link>
-                <div className="ml-auto flex min-w-0 shrink-0 flex-col items-end gap-0.5 text-right text-xs text-[var(--fg-muted)]">
+                <div className="flex shrink-0 flex-col items-end gap-0.5 text-right text-xs text-[var(--fg-muted)]">
                   <span
                     className="text-[var(--fg)]"
                     title={`Letzte Timeline-Aktivität: ${formatDateTime(c.lastTimelineAt)}`}
@@ -147,10 +151,13 @@ export default function HomePage() {
               const co = companyById.get(k.companyId);
               return (
                 <li key={k.id} className="border-b border-[var(--hairline)] pb-3 last:border-0">
-                  <div className="flex items-start justify-between gap-3">
+                  <div className="flex items-start gap-2 sm:gap-3">
                     <div className="min-w-0 flex-1">
                       <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
-                        <Link href={`/contacts/${k.id}`} className="shrink-0 font-medium hover:underline">
+                        <Link
+                          href={`/contacts/${k.id}`}
+                          className="min-w-0 break-words font-medium hover:underline"
+                        >
                           {k.firstName} {k.lastName}
                         </Link>
                         {k.roleTitle?.trim() && (
@@ -176,23 +183,20 @@ export default function HomePage() {
                         <span className="truncate">{co?.name ?? "Firma"}</span>
                       </Link>
                     </div>
-                    <div className="flex shrink-0 flex-col items-end gap-0.5 text-right">
-                      <time
-                        className="text-xs tabular-nums text-[var(--fg-muted)]"
-                        dateTime={k.createdAt}
-                      >
+                    <div className="flex shrink-0 flex-col items-end gap-0.5 text-right text-xs text-[var(--fg-muted)]">
+                      <time className="tabular-nums" dateTime={k.createdAt}>
                         {formatDateTime(k.createdAt)}
                       </time>
                       {k.lastTimelineAt ? (
                         <span
-                          className="max-w-[11rem] text-[10px] leading-tight text-[var(--fg-muted)]"
+                          className="max-w-[11rem] text-[10px] leading-tight"
                           title={`Letztes Ereignis mit Kontakt: ${formatDateTime(k.lastTimelineAt)}`}
                         >
                           {formatRelativeActivityBrief(k.lastTimelineAt)}
                         </span>
                       ) : (
                         <span
-                          className="text-[10px] text-[var(--fg-muted)]"
+                          className="text-[10px]"
                           title="Kein Timeline-Ereignis mit diesem Kontakt"
                         >
                           Kein Ereignis
@@ -219,16 +223,20 @@ export default function HomePage() {
                 const contentExpanded = !!timelineExpanded[ev.id];
                 return (
                   <li key={ev.id}>
-                    <article className="overflow-hidden rounded-2xl border border-[var(--hairline)] bg-[var(--bg-elevated)] shadow-sm">
-                      <div className="flex gap-3 p-4 sm:gap-4 sm:p-5">
-                        <TimelineEntryTypeStamp type={ev.type as TimelineEntryType} />
+                    <article className="overflow-hidden rounded-xl border border-[var(--hairline)] bg-[var(--bg-elevated)] shadow-sm sm:rounded-2xl">
+                      <div className="flex flex-col gap-3 p-3 sm:flex-row sm:gap-4 sm:p-5">
+                        <div className="flex shrink-0 justify-center sm:block sm:justify-start">
+                          <TimelineEntryTypeStamp type={ev.type as TimelineEntryType} />
+                        </div>
                         <div className="min-w-0 flex-1">
-                          <h3 className="text-base font-semibold leading-snug text-[var(--fg)]">{ev.title}</h3>
-                          <p className="mt-1 text-xs text-[var(--fg-muted)]">
+                          <h3 className="break-words text-base font-semibold leading-snug text-[var(--fg)]">
+                            {ev.title}
+                          </h3>
+                          <div className="mt-1 flex flex-wrap items-center gap-x-1.5 gap-y-1 text-xs text-[var(--fg-muted)]">
                             {co ? (
                               <Link
                                 href={`/companies/${ev.companyId}`}
-                                className="inline-flex max-w-full min-w-0 items-center gap-1.5 hover:text-[var(--fg)] hover:underline"
+                                className="inline-flex min-w-0 max-w-full items-center gap-1.5 hover:text-[var(--fg)] hover:underline"
                               >
                                 {co.accentColor ? (
                                   <span
@@ -247,28 +255,30 @@ export default function HomePage() {
                             ) : (
                               <span>—</span>
                             )}
-                            <span aria-hidden className="mx-1.5">
+                            <span aria-hidden className="text-[var(--hairline)]">
                               ·
                             </span>
-                            {formatDateTime(ev.occurredAt)}
-                            <span aria-hidden className="mx-1.5">
+                            <time className="shrink-0 whitespace-nowrap" dateTime={ev.occurredAt}>
+                              {formatDateTime(ev.occurredAt)}
+                            </time>
+                            <span aria-hidden className="text-[var(--hairline)]">
                               ·
                             </span>
-                            {ev.source}
+                            <span className="min-w-0 break-words">{ev.source}</span>
                             {ev.contactId && ev.contactName && (
                               <>
-                                <span aria-hidden className="mx-1.5">
+                                <span aria-hidden className="text-[var(--hairline)]">
                                   ·
                                 </span>
                                 <Link
                                   href={`/contacts/${ev.contactId}`}
-                                  className="hover:text-[var(--fg)] hover:underline"
+                                  className="min-w-0 break-words hover:text-[var(--fg)] hover:underline"
                                 >
                                   {ev.contactName}
                                 </Link>
                               </>
                             )}
-                          </p>
+                          </div>
                           {ev.content && (
                             <div className="mt-3">
                               <div

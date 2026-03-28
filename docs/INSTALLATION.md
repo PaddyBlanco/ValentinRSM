@@ -136,9 +136,80 @@ NEXT_PUBLIC_API_URL=http://localhost:5112
 
 ### 4.4 SQL Server-Verbindung (lokal)
 
-Tragt die Verbindung in **`apps/api/appsettings.json`** (oder `appsettings.Development.json` / User-Secrets) unter `ConnectionStrings:DefaultConnection` ein, z. B.:
+Die Verbindungszeile **nicht** mit echtem Passwort ins Repository legen. In **`apps/api/appsettings.json`** ist **keine** `ConnectionStrings:DefaultConnection` mehr eingetragen; beim Start ohne Konfiguration meldet die API einen klaren Fehler.
 
-`Server=localhost,1433;Database=ValentinRSM;User Id=sa;Password=...;TrustServerCertificate=True;MultipleActiveResultSets=true`
+**Beispiel-ConnectionString** (SQL Server lokal oder Docker-Port 1433, Platzhalter für das SA-Passwort):
+
+```text
+Server=localhost,1433;Database=ValentinRSM;User Id=sa;Password=<IHR_SA_PASSWORT>;TrustServerCertificate=True;MultipleActiveResultSets=true
+```
+
+`<IHR_SA_PASSWORT>` durch euer echtes Passwort ersetzen (z. B. wie `MSSQL_SA_PASSWORD` in der Root-**`.env`** bei Docker).
+
+**Variante A – User Secrets** (empfohlen für `dotnet run` im Ordner `apps/api`; Zeichenkette in **eine** Zeile, Anführungszeichen wie unten):
+
+```powershell
+cd apps/api
+dotnet user-secrets set "ConnectionStrings:DefaultConnection" "Server=localhost,1433;Database=ValentinRSM;User Id=sa;Password=<IHR_SA_PASSWORT>;TrustServerCertificate=True;MultipleActiveResultSets=true"
+```
+
+**Variante B – Umgebungsvariable** (PowerShell, nur aktuelle Sitzung):
+
+```powershell
+$env:ConnectionStrings__DefaultConnection="Server=localhost,1433;Database=ValentinRSM;User Id=sa;Password=<IHR_SA_PASSWORT>;TrustServerCertificate=True;MultipleActiveResultSets=true"
+cd apps/api
+dotnet run
+```
+
+**Docker Compose:** Die API erhält die Verbindung über **`ConnectionStrings__DefaultConnection`** aus der Root-**`.env`** (siehe `docker-compose.yml`); dort muss das Passwort zur SQL-Instanz passen.
+
+### 4.5 Microsoft Entra ID (Anmeldung)
+
+Die Web-App nutzt **Auth.js** mit dem Provider **Microsoft Entra ID**; die API kann **JWT Bearer** (Microsoft.Identity.Web) erzwingen. Überblick und Azure-Schritte: [PLAN_ENTRA_AZURE.md](PLAN_ENTRA_AZURE.md).
+
+#### Umleitungs-URI (Redirect) – Web-App-Registrierung, damit der Login zurückkommt
+
+Nach dem Microsoft-Login leitet Entra den Browser auf eine **feste Callback-URL** eurer Next.js-App. Diese URL muss in Entra **eingetragen** sein – sonst schlägt der Login mit einem Redirect-Fehler fehl.
+
+**Wo ihr das im Portal findet**
+
+1. [Microsoft Entra Admin Center](https://entra.microsoft.com/) öffnen.  
+2. **App-Registrierungen** → die **Web-Client-App** auswählen (z. B. **ValentinRSM Web** – nicht die API-App).  
+3. Linkes Menü: **Authentifizierung**.  
+4. Plattform **Web** hinzufügen oder bearbeiten (falls noch nicht vorhanden).  
+5. Bereich **Umleitungs-URIs** / **Redirect URIs**.
+
+**Was ihr eintragt**
+
+- **Lokal / Test auf dem eigenen Rechner** (Docker oder `npm run dev`, Port 3000): **genau eine Zeile:**
+
+  ```text
+  http://localhost:3000/api/auth/callback/microsoft-entra-id
+  ```
+
+- **Später im Internet (Produktion):** **zusätzlich** eine **zweite** Zeile mit der öffentlichen HTTPS-Adresse eurer Web-App, z. B.:
+
+  ```text
+  https://<ihre-domain.de>/api/auth/callback/microsoft-entra-id
+  ```
+
+  (Host und Port müssen zur echten URL passen; der Pfad `/api/auth/callback/microsoft-entra-id` ist bei Auth.js mit dem Microsoft-Entra-ID-Provider vorgegeben.)
+
+**Speichern** (oben oder unten im Blatt **Speichern** klicken – sonst gehen die URIs verloren).
+
+**Passend zur Umgebungsvariable `AUTH_URL`:** `AUTH_URL` ist die **Basis-URL** der Web-App **ohne** diesen Pfad – z. B. `http://localhost:3000` lokal und `https://ihre-domain.de` in Produktion. Sie muss zur jeweils genutzten Redirect-Basis passieren.
+
+Ausführlicher Entra-Überblick (Gruppe, Zuweisung, Variablen): [ENTRA_GRUPPE_ANMELDUNG.md](ENTRA_GRUPPE_ANMELDUNG.md).
+
+---
+
+**Minimal (lokal, ohne Microsoft-Konto):** API `Auth:Mode` auf `None` lassen (Standard in `appsettings.Development.json` / `appsettings.json`). Im Web **`AUTH_DISABLED=true`** setzen (siehe `.env.example` und `apps/web/.env.local.example`) – dann entfällt die Anmeldung; die API akzeptiert Aufrufe ohne `Authorization`-Header.
+
+**Mit Entra:** In Azure zwei App-Registrierungen (geschützte **API** mit „API veröffentlichen“ / Scope z. B. `access_as_user`; **Web-Client** mit den Umleitungs-URIs wie oben). Web-Umgebung: `AUTH_SECRET`, `AUTH_URL`, `AUTH_MICROSOFT_ENTRA_ID_ID`, `AUTH_MICROSOFT_ENTRA_ID_SECRET`, `AUTH_MICROSOFT_ENTRA_ID_ISSUER` (z. B. `https://login.microsoftonline.com/<TENANT_ID>/v2.0` ohne Slash am Ende), `AUTH_API_SCOPE` (delegierter Scope für die API). API: `Auth:Mode=Entra` und `AzureAd`-Werte (`TenantId`, `ClientId` der API-App, `Audience` passend zum Token). **Wer sich anmelden darf**, legen Sie im **Microsoft Entra Admin Center** fest (Unternehmens-App / **Benutzer und Gruppen** zuweisen, ggf. dynamische Gruppe für Mitglieder, Conditional Access) – die Web-App **vertraut** einem erfolgreichen OAuth-Login und führt **keine** zusätzliche E-Mail-Allowlist aus.
+
+**Clientgeheimnis (App „ValentinRSM Web“):** Clientgeheimnisse laufen in Entra ab. Das für **`AUTH_MICROSOFT_ENTRA_ID_SECRET`** genutzte Geheimnis dieser Registrierung ist bis **28.03.2028** gültig. Vor Ablauf unter **App-Registrierungen → ValentinRSM Web → Zertifikate und Geheimnisse** ein **neues** Clientgeheimnis anlegen, den Wert in `.env` / Hosting (**`AUTH_MICROSOFT_ENTRA_ID_SECRET`**) setzen und das alte Geheimnis nach der Umstellung entfernen.
+
+**Schritt-für-Schritt (nur eine Gruppe, Zuweisung in Entra):** [ENTRA_GRUPPE_ANMELDUNG.md](ENTRA_GRUPPE_ANMELDUNG.md)
 
 ---
 

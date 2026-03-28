@@ -4,6 +4,8 @@ import { faGear } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { mainNav } from "@/lib/nav";
 import { useSettings } from "../settings/settings-provider";
 
@@ -11,10 +13,15 @@ import { useSettings } from "../settings/settings-provider";
 export function MobileBottomNav() {
   const pathname = usePathname();
   const { setOpen: openSettings } = useSettings();
+  const [portalEl, setPortalEl] = useState<HTMLElement | null>(null);
 
-  return (
+  useEffect(() => {
+    setPortalEl(document.body);
+  }, []);
+
+  const nav = (
     <nav
-      className="fixed bottom-0 left-0 right-0 z-50 border-t border-[var(--hairline)] bg-[var(--bg)]/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-sm md:hidden"
+      className="fixed inset-x-0 bottom-0 z-[60] box-border w-full max-w-[100vw] border-t border-[var(--hairline)] bg-[var(--bg)] pb-[max(env(safe-area-inset-bottom),0px)] md:hidden"
       aria-label="Hauptnavigation und Einstellungen"
     >
       <ul className="flex h-16 w-full flex-row items-stretch justify-around">
@@ -50,4 +57,6 @@ export function MobileBottomNav() {
       </ul>
     </nav>
   );
+
+  return portalEl ? createPortal(nav, portalEl) : nav;
 }

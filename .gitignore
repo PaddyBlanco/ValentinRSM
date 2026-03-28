@@ -7,6 +7,9 @@
 **/obj/
 *.user
 *.suo
+# Lokale API-Konfiguration mit Secrets (optional)
+**/appsettings.Local.json
+**/appsettings.*.local.json
 
 # Node
 **/node_modules/

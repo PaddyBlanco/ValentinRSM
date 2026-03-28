@@ -5,7 +5,9 @@
 
 ## Architecture Constraints
 
+- **API:** `appsettings.json` ist versioniert ohne echte Secrets; SQL-Verbindung u. a. über **User Secrets** oder **`ConnectionStrings__DefaultConnection`** (siehe INSTALLATION).
 - **Internes RM-System** für 2 Nutzer – kein SaaS, kein generisches CRM.
+- **Zugang zur Web-App:** Steuerung im **Microsoft Entra Admin Center** (App-Zuweisung / Gruppen); die App vertraut dem OAuth-Login, keine E-Mail-Allowlist im Code.
 - **Monolith:** ein Backend (ASP.NET Core / .NET 10), ein Frontend (Next.js), eine DB (**SQL Server**, lokal z. B. per Docker-Image); Docker Compose; n8n nur via **API**.
 - **Primärobjekt Firma;** Kontakt gehört **genau einer** Firma; Firma hat **Typ (Freitext)** und **Status** (fest); optional **Kennfarbe** für Listen/Übersichten.
 - **Timeline:** chronologisch; jeder Eintrag hat **Firma + Kontakt**; kein WhatsApp in der Timeline; Statuswechsel **keine** Timeline-Events.
