@@ -16,7 +16,7 @@ Internes RM-UI (Next.js App Router, React, TypeScript). **Domänenregeln und Arc
 
 - **Dev:** `cd apps/web` → `npm run dev` (typisch http://localhost:3000)
 - **Build:** `npm run build`; Typcheck: `npx tsc --noEmit`
-- **API-Basis-URL:** Browser: `NEXT_PUBLIC_API_URL` (Fallback lokal `http://localhost:5112` in [`lib/api.ts`](apps/web/lib/api.ts)); Server-Komponenten/SSR: `API_INTERNAL_URL` oder Fallback wie `getApiBaseUrl()` dokumentiert.
+- **API-Basis-URL:** Browser: `NEXT_PUBLIC_API_URL` (Fallback lokal `http://localhost:5112` in [`lib/api.ts`](apps/web/lib/api.ts)); SSR: `API_INTERNAL_URL` oder Fallback wie oben.
 
 ## App Router (`app/`)
 

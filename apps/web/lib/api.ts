@@ -43,7 +43,7 @@ export type TimelineEntry = {
   updatedAt: string;
 };
 
-/** Default für lokales `dotnet run` (Port 5112). Docker/Web: NEXT_PUBLIC_API_URL zur Build-Zeit setzen (z. B. :8080). */
+/** Default für lokales `dotnet run` (Port 5112). Docker/Web: `NEXT_PUBLIC_API_URL` (z. B. http://localhost:8080). */
 const defaultLocalApi = "http://localhost:5112";
 
 export function getApiBaseUrl(): string {

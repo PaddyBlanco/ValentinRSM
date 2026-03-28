@@ -48,11 +48,7 @@ Datei **`.env`** bearbeiten:
 
 - **`MSSQL_SA_PASSWORD`** – starkes Passwort setzen. Es muss den **SQL-Server-Regeln** genügen (Länge, Groß-/Kleinbuchstaben, Zahlen/Sonderzeichen). Dieses Passwort nutzen später `sa` und die Verbindungszeile der API im Container.
 
-- **`NEXT_PUBLIC_API_URL`** – für den **Browser** die URL der API. Bei Standard-Compose:
-
-  `http://localhost:8080`
-
-  (Nicht ändern, solange ihr die Ports in `docker-compose.yml` nicht anpasst.)
+- **`NEXT_PUBLIC_API_URL`** – für den **Browser** die URL der API. Bei Standard-Compose: `http://localhost:8080` (siehe Ports in `docker-compose.yml`).
 
 > **Sicherheit:** `.env` ist in `.gitignore` und gehört **nicht** ins Repository.
 
@@ -76,6 +72,8 @@ Nach dem Start (SQL Server braucht oft **20–60 Sekunden**, bis er Anfragen ann
 - **SQL Server:** Host `localhost`, Port `1433`, Login `sa`, Passwort wie `MSSQL_SA_PASSWORD` in `.env`  
 
 Die Startseite der Web-App zeigt den Status von `/health` an. Wenn dort zunächst „nicht erreichbar“ steht: kurz warten, API-Container prüfen (`docker compose logs api`), erneut laden.
+
+**Öffentlicher Betrieb:** Für eine **HTTPS-URL** (Domain, Reverse-Proxy) `AUTH_URL`, `NEXT_PUBLIC_API_URL`, Entra-Umleitungs-URIs und `AllowedOrigins` in der API anpassen — siehe `.env.example` und Abschnitt 4.5.
 
 ### 3.5 Stack beenden
 
